@@ -1,0 +1,5 @@
+"use client";
+import {authStyles} from "@/lib/auth-presentation";
+import {useEffect,useState} from "react";
+import {storageStatus} from "@/lib/server-storage";
+export function SessionMonitor(){const [expired,setExpired]=useState(false);useEffect(()=>{let checking=false,active=true;const check=async()=>{if(checking||document.hidden)return;checking=true;try{const response=await fetch("/api/auth/session",{cache:"no-store"});if(!response.ok)return;const session=await response.json();if(!active)return;if(!session?.user){const state=storageStatus();if(state.pending||state.error)setExpired(true);else window.location.assign("/login");}else setExpired(false);}catch{/* Retry when connectivity returns. */}finally{checking=false}};const timer=setInterval(check,60000);window.addEventListener("focus",check);return()=>{active=false;clearInterval(timer);window.removeEventListener("focus",check)}},[]);return expired?<div role="alert" className="session-expired auth-notice"><style>{authStyles}</style><strong>로그인이 만료되었습니다.</strong><p> 미저장 작업을 보관하거나 <a href="/login" target="_blank" rel="noopener noreferrer">새 창에서 로그인</a>한 뒤 저장을 다시 시도하세요.</p></div>:null;}

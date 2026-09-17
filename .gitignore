@@ -1,0 +1,21 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env*
+!.env.example
+test-results/
+playwright-report/
+
+# Keep service-account files outside the project; never commit credentials.
+credentials/
+secrets/
+*service-account*.json
+*service_account*.json
+*.pem
+*.key
+
+prisma/*.db
+prisma/*.db-*
+
+.validation/

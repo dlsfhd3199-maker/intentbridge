@@ -1,0 +1,1197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#0b0d10" />
+<title>IntentBridge | GPT × Meta Growth Orchestration</title>
+<style>
+:root{
+  --bg:#f3f2ee;
+  --paper:#fbfaf7;
+  --ink:#0b0d10;
+  --ink2:#15191f;
+  --text:#15181d;
+  --muted:#72767d;
+  --line:#deddd7;
+  --line-dark:rgba(255,255,255,.12);
+  --mint:#47efc4;
+  --mint2:#b8ffe9;
+  --violet:#8068ff;
+  --cyan:#57caff;
+  --amber:#ffca6a;
+  --danger:#ff7068;
+  --white:#fff;
+  --max:1440px;
+  --radius:28px;
+  --shadow:0 28px 80px rgba(24,28,34,.08);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",Arial,sans-serif;letter-spacing:-.025em;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button,input,select{font:inherit}
+button{cursor:pointer}
+::selection{background:var(--mint);color:#08100d}
+
+/* ---------- global ---------- */
+.wrap{width:min(var(--max),calc(100% - 44px));margin:0 auto}
+.section{padding:116px 0}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#5c626a}
+.eyebrow:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 5px rgba(71,239,196,.15)}
+.section-title{margin:18px 0 0;font-size:clamp(38px,4.2vw,68px);line-height:1.04;letter-spacing:-.055em;font-weight:760;word-break:keep-all}
+.section-title .accent{color:#6653f0}
+.section-lead{max-width:820px;margin:24px 0 0;font-size:17px;line-height:1.85;color:#6d7178;word-break:keep-all}
+.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;letter-spacing:-.03em}
+.tag{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:999px;font-size:11px;font-weight:800;background:#ecebe6;border:1px solid #dfded8;color:#62666c}
+.tag i{width:6px;height:6px;border-radius:50%;background:currentColor;display:block}
+.btn{border:0;border-radius:999px;padding:14px 18px;font-weight:800;transition:.2s ease;display:inline-flex;align-items:center;justify-content:center;gap:9px}
+.btn:hover{transform:translateY(-2px)}
+.btn-dark{background:#0d1014;color:#fff;box-shadow:0 14px 36px rgba(12,15,20,.18)}
+.btn-light{background:#fff;border:1px solid #deddd8;color:#20242a}
+.btn-mint{background:var(--mint);color:#08110e;box-shadow:0 15px 35px rgba(71,239,196,.18)}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:1px solid #dcdbd5;background:#fff;display:grid;place-items:center}
+
+/* ---------- top nav ---------- */
+.topnav{position:fixed;top:14px;left:0;right:0;z-index:100;pointer-events:none}
+.navbar{pointer-events:auto;width:min(1180px,calc(100% - 32px));margin:auto;background:rgba(248,247,243,.86);backdrop-filter:blur(18px);border:1px solid rgba(210,209,203,.9);border-radius:999px;padding:9px 10px 9px 16px;display:flex;align-items:center;gap:18px;box-shadow:0 14px 38px rgba(20,24,30,.08)}
+.brand{display:flex;align-items:center;gap:11px;min-width:max-content}
+.brand-symbol{width:32px;height:32px;border-radius:10px;background:#101318;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.brand-symbol:before,.brand-symbol:after{content:"";position:absolute;border-radius:999px}
+.brand-symbol:before{width:22px;height:7px;background:var(--mint);left:5px;top:7px;transform:rotate(-23deg)}
+.brand-symbol:after{width:22px;height:7px;background:var(--violet);right:4px;bottom:7px;transform:rotate(-23deg)}
+.brand b{font-size:15px;letter-spacing:-.02em}.brand span{font-size:9px;color:#85898f;text-transform:uppercase;letter-spacing:.13em;display:block;margin-top:1px}
+.navlinks{display:flex;align-items:center;justify-content:center;gap:4px;margin-left:auto}
+.navlinks a{font-size:12px;font-weight:750;color:#676b72;padding:10px 11px;border-radius:999px;transition:.18s ease}
+.navlinks a:hover,.navlinks a.active{background:#eae9e4;color:#15181d}
+.nav-actions{display:flex;align-items:center;gap:7px}
+.nav-actions .btn{font-size:11px;padding:11px 14px}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;padding:150px 0 80px;position:relative;display:flex;align-items:center}
+.hero:before{content:"";position:absolute;inset:0;background:
+radial-gradient(circle at 14% 15%,rgba(128,104,255,.13),transparent 25%),
+radial-gradient(circle at 85% 22%,rgba(71,239,196,.17),transparent 28%),
+linear-gradient(rgba(15,18,22,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(15,18,22,.035) 1px,transparent 1px);background-size:auto,auto,54px 54px,54px 54px;mask-image:linear-gradient(to bottom,#000 0%,transparent 92%);pointer-events:none}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:70px;align-items:center;position:relative}
+.hero-copy{padding-top:10px}
+.hero-kicker{display:flex;align-items:center;gap:11px;font-size:12px;color:#686d73;font-weight:800}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 6px rgba(71,239,196,.12)}
+.hero h1{font-size:clamp(58px,6.25vw,94px);line-height:.98;letter-spacing:-.068em;margin:24px 0 28px;font-weight:760;word-break:keep-all}
+.hero h1 .bridge{display:block;color:#6655ef}
+.hero h1 .meta{display:block;color:#11141a}
+.hero .lead{font-size:18px;line-height:1.85;color:#686c73;max-width:720px;word-break:keep-all}
+.hero .lead strong{color:#16191e}
+.hero-actions{display:flex;gap:10px;margin-top:31px;flex-wrap:wrap}
+.hero-note{display:flex;gap:16px;align-items:center;margin-top:24px;font-size:11px;color:#85898f;flex-wrap:wrap}
+.hero-note span{display:flex;align-items:center;gap:7px}.hero-note span:before{content:"✓";width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#e7e6e0;color:#484d54;font-size:9px;font-weight:900}
+
+/* architecture visual */
+.orbit-card{position:relative;min-height:630px;border-radius:38px;background:#0b0e12;color:#fff;box-shadow:0 44px 90px rgba(10,12,15,.22);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.orbit-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 72% 18%,rgba(71,239,196,.17),transparent 27%),radial-gradient(circle at 18% 76%,rgba(128,104,255,.24),transparent 30%),linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:auto,auto,38px 38px,38px 38px}
+.orbit-head{position:relative;padding:28px 30px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.orbit-head small{color:#9da4af;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800}.orbit-head b{display:block;font-size:20px;margin-top:6px}.orbit-status{font-size:9px;font-weight:900;padding:7px 9px;border:1px solid rgba(71,239,196,.26);color:var(--mint);border-radius:999px;background:rgba(71,239,196,.06)}
+.arch{position:relative;height:470px;margin:0 22px 20px}
+.arch svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.arch-node{position:absolute;width:144px;padding:13px 13px 12px;border-radius:18px;background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px);transition:.2s ease}
+.arch-node:hover{transform:translateY(-3px);background:rgba(255,255,255,.1)}
+.arch-node .node-no{font-size:8px;color:#787f8a;letter-spacing:.12em;text-transform:uppercase}.arch-node b{display:block;font-size:13px;margin-top:6px}.arch-node span{display:block;font-size:9px;color:#939aa5;line-height:1.55;margin-top:5px}
+.arch-node .metric{display:flex;align-items:center;justify-content:space-between;margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);font-size:9px;color:#bcc2ca}.arch-node .metric strong{font-size:12px;color:#fff}
+.n1{left:3%;top:16%}.n2{left:33%;top:4%}.n3{right:4%;top:20%}.n4{left:15%;bottom:9%}.n5{right:18%;bottom:5%}
+.arch-core{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:142px;height:142px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,rgba(71,239,196,.25),rgba(71,239,196,.04) 58%,transparent 60%);box-shadow:0 0 0 1px rgba(71,239,196,.2),0 0 0 18px rgba(71,239,196,.035),0 0 0 40px rgba(71,239,196,.018)}
+.arch-core .inner{width:86px;height:86px;border-radius:27px;background:#12171c;border:1px solid rgba(255,255,255,.11);display:grid;place-items:center;text-align:center;box-shadow:0 15px 50px rgba(0,0,0,.28)}.arch-core b{font-size:14px}.arch-core span{display:block;font-size:8px;color:var(--mint);margin-top:3px;letter-spacing:.08em}
+.orbit-foot{position:absolute;bottom:20px;left:22px;right:22px;padding:11px 14px;border-radius:14px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:9px;color:#8f97a2}.orbit-foot b{color:#fff;font-size:10px}
+
+/* ---------- signal strip ---------- */
+.signal-strip{margin-top:-20px;position:relative;z-index:3}
+.signal-panel{background:#fff;border:1px solid #deddd7;border-radius:26px;padding:16px;box-shadow:var(--shadow);display:grid;grid-template-columns:1.05fr repeat(4,1fr);gap:8px}
+.signal-intro{padding:17px 18px}.signal-intro small{font-size:9px;color:#8b8e93;letter-spacing:.14em;text-transform:uppercase;font-weight:850}.signal-intro b{display:block;font-size:17px;margin-top:7px}.signal-box{padding:15px;border-radius:18px;background:#f2f1ed;border:1px solid #e7e6e1}.signal-box .top{display:flex;align-items:center;justify-content:space-between;gap:8px}.signal-box .num{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;background:#11151a;color:#fff;font-size:9px;font-weight:900}.signal-box small{font-size:8px;color:#9a9da2;text-transform:uppercase;letter-spacing:.1em}.signal-box b{display:block;font-size:13px;margin-top:11px}.signal-box span{display:block;font-size:10px;color:#777b82;margin-top:4px;line-height:1.5}
+
+/* ---------- problem ---------- */
+.problem-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:54px;align-items:start;margin-top:50px}
+.problem-quote{position:sticky;top:110px;padding:34px;border-radius:30px;background:#13171c;color:#fff;min-height:480px;overflow:hidden}.problem-quote:after{content:"";position:absolute;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(128,104,255,.28),transparent 67%);right:-70px;bottom:-60px}.problem-quote small{font-size:10px;color:#8e969f;letter-spacing:.14em;text-transform:uppercase}.problem-quote h3{font-size:37px;line-height:1.15;letter-spacing:-.045em;margin:21px 0 16px;word-break:keep-all}.problem-quote p{font-size:14px;color:#9fa5ad;line-height:1.8;max-width:410px}.tool-cloud{position:absolute;left:32px;right:32px;bottom:31px;display:flex;gap:7px;flex-wrap:wrap}.tool-cloud span{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);font-size:9px;color:#c8ccd1}
+.pain-list{display:grid;gap:10px}.pain-item{display:grid;grid-template-columns:62px 1fr auto;gap:18px;align-items:center;padding:23px 24px;border-bottom:1px solid #d9d8d2;transition:.2s ease}.pain-item:hover{background:#efeee9;border-radius:20px;border-color:transparent}.pain-no{font-size:11px;color:#9b9ea3;font-family:Consolas,monospace}.pain-item b{font-size:18px}.pain-item p{font-size:12px;color:#7c8086;line-height:1.6;margin:5px 0 0}.pain-arrow{font-size:20px;color:#a4a7ab}
+
+/* ---------- bridge section ---------- */
+.dark-section{background:#0b0e12;color:#fff;padding:118px 0;position:relative;overflow:hidden}
+.dark-section:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 10% 20%,rgba(128,104,255,.12),transparent 22%),radial-gradient(circle at 90% 74%,rgba(71,239,196,.11),transparent 25%)}
+.dark-section .eyebrow{color:#9097a2}.dark-section .section-lead{color:#9299a3}.dark-section .section-title .accent{color:var(--mint)}
+.bridge-flow{margin-top:64px;position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.bridge-flow:before{content:"";position:absolute;left:9%;right:9%;top:48px;height:1px;background:linear-gradient(90deg,transparent,var(--violet),var(--mint),transparent);opacity:.7}
+.flow-step{position:relative;z-index:1;padding:18px 14px 19px;border-radius:22px;background:#11151a;border:1px solid rgba(255,255,255,.08);min-height:190px}.flow-icon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:#171c22;border:1px solid rgba(255,255,255,.1);font-size:17px;box-shadow:0 12px 30px rgba(0,0,0,.24)}.flow-step:nth-child(1) .flow-icon{color:#b9a9ff}.flow-step:nth-child(3) .flow-icon{color:var(--cyan)}.flow-step:nth-child(4) .flow-icon{color:var(--mint)}.flow-step:nth-child(5) .flow-icon{color:var(--amber)}
+.flow-step small{display:block;margin-top:21px;font-size:8px;color:#666e79;text-transform:uppercase;letter-spacing:.14em}.flow-step b{display:block;font-size:15px;margin-top:6px}.flow-step span{display:block;font-size:10px;color:#8f96a0;line-height:1.55;margin-top:7px}
+.flow-caption{margin-top:18px;padding:17px 19px;border:1px solid rgba(255,255,255,.08);border-radius:18px;background:rgba(255,255,255,.035);display:flex;align-items:center;justify-content:space-between;gap:18px;color:#9aa1aa;font-size:11px;line-height:1.6}.flow-caption strong{color:#fff}.flow-caption .logic{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.logic span{padding:6px 8px;border-radius:999px;background:#151a20;border:1px solid rgba(255,255,255,.08);font-size:8px;color:#aab0b8}
+
+/* ---------- metrics ---------- */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:52px}.metric-card{padding:24px;border-radius:24px;border:1px solid #dcdbd5;background:#faf9f6;min-height:190px;position:relative;overflow:hidden}.metric-card:after{content:"";position:absolute;width:100px;height:100px;border-radius:50%;right:-28px;bottom:-33px;background:radial-gradient(circle,rgba(128,104,255,.08),transparent 68%)}.metric-card small{font-size:9px;color:#92959a;letter-spacing:.12em;text-transform:uppercase;font-weight:850}.metric-card b{display:block;font-size:37px;letter-spacing:-.05em;margin-top:24px}.metric-card p{font-size:11px;color:#74787e;line-height:1.55;margin:8px 0 0}.metric-card .chip{position:absolute;right:16px;top:16px;padding:5px 7px;border-radius:999px;background:#e7fff7;color:#148666;font-size:8px;font-weight:900}
+
+/* ---------- feature grid ---------- */
+.feature-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-top:50px}.feature-card{border-radius:28px;border:1px solid #ddddd7;background:#faf9f6;padding:27px;min-height:260px;position:relative;overflow:hidden;transition:.2s ease}.feature-card:hover{transform:translateY(-3px);box-shadow:0 22px 50px rgba(22,26,32,.08)}.feature-card.large{grid-column:span 7}.feature-card.small{grid-column:span 5}.feature-card.half{grid-column:span 6}.feature-card.dark{background:#11151a;color:#fff;border-color:#11151a}.feature-card .feature-index{font-size:9px;color:#9a9da2;letter-spacing:.12em;text-transform:uppercase}.feature-card h3{font-size:25px;line-height:1.25;letter-spacing:-.04em;margin:16px 0 10px;word-break:keep-all}.feature-card p{font-size:12px;line-height:1.75;color:#777b82;max-width:520px}.feature-card.dark p{color:#9299a2}.feature-list{display:flex;gap:7px;flex-wrap:wrap;margin-top:23px}.feature-list span{font-size:9px;padding:7px 9px;border-radius:999px;background:#eeede9;border:1px solid #e1e0da;color:#60646a;font-weight:750}.dark .feature-list span{background:#171c22;border-color:rgba(255,255,255,.08);color:#9ea5ad}.mini-ui{margin-top:23px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.mini-ui div{padding:13px;border-radius:14px;background:#f1f0ec;border:1px solid #e4e3de}.mini-ui small{display:block;font-size:8px;color:#92959a}.mini-ui b{display:block;font-size:14px;margin-top:5px}.dark .mini-ui div{background:#171c22;border-color:rgba(255,255,255,.07)}.dark .mini-ui small{color:#717983}
+
+/* ---------- demo ---------- */
+.demo-section{padding-top:0}.demo-shell{border-radius:34px;overflow:hidden;background:#101318;color:#fff;box-shadow:0 38px 90px rgba(11,13,16,.21);border:1px solid #1f242b}
+.demo-topbar{height:68px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;padding:0 20px;gap:14px;background:#0d1014}.demo-logo{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:850}.demo-badge{margin-left:auto;padding:6px 8px;border-radius:999px;background:rgba(71,239,196,.09);color:var(--mint);border:1px solid rgba(71,239,196,.16);font-size:8px;font-weight:900;letter-spacing:.08em}.demo-company{font-size:9px;color:#777f89;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px}
+.demo-app{display:grid;grid-template-columns:210px 1fr;min-height:850px}.demo-sidebar{padding:18px 12px;background:#0d1014;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column}.demo-nav-title{font-size:8px;color:#555e69;letter-spacing:.12em;text-transform:uppercase;padding:8px 10px}.demo-nav{display:grid;gap:3px}.demo-nav button{border:0;background:transparent;color:#7f8791;text-align:left;padding:10px 11px;border-radius:11px;font-size:10px;font-weight:800;display:flex;align-items:center;gap:9px}.demo-nav button.active{background:#181d23;color:#fff}.demo-nav .dot{width:6px;height:6px;border-radius:50%;background:#505760}.demo-nav button.active .dot{background:var(--mint);box-shadow:0 0 0 4px rgba(71,239,196,.09)}.demo-side-note{margin-top:auto;padding:13px;border-radius:16px;background:linear-gradient(160deg,#181e25,#11161b);border:1px solid rgba(255,255,255,.06)}.demo-side-note small{font-size:7px;color:#616a75}.demo-side-note b{display:block;font-size:11px;line-height:1.5;margin-top:5px}.demo-side-note span{display:block;font-size:8px;color:#727b85;line-height:1.5;margin-top:5px}
+.demo-main{background:#12161b;padding:21px;min-width:0}.demo-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:17px}.demo-head small{font-size:8px;color:#636b75;text-transform:uppercase;letter-spacing:.13em}.demo-head h3{font-size:22px;margin:6px 0 0;letter-spacing:-.04em}.demo-period{display:flex;gap:5px}.demo-period button{border:1px solid rgba(255,255,255,.08);background:#171c22;color:#777f89;border-radius:9px;padding:7px 9px;font-size:8px;font-weight:800}.demo-period button.active{background:#fff;color:#111;border-color:#fff}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.demo-kpi{padding:15px;border-radius:17px;background:#181d23;border:1px solid rgba(255,255,255,.06)}.demo-kpi span{font-size:8px;color:#747c86}.demo-kpi b{display:block;font-size:20px;margin-top:8px;letter-spacing:-.04em}.demo-kpi em{display:block;font-size:7px;color:var(--mint);font-style:normal;margin-top:5px}.demo-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px;margin-top:10px}.demo-card{padding:16px;border-radius:19px;background:#181d23;border:1px solid rgba(255,255,255,.06);min-width:0}.demo-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.demo-card-head b{font-size:11px}.demo-card-head span{font-size:7px;color:#68717c}.funnel-bars{display:grid;gap:9px}.funnel-row{display:grid;grid-template-columns:95px 1fr 58px;gap:9px;align-items:center}.funnel-row label{font-size:8px;color:#8b939d}.bar{height:10px;background:#21272e;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--violet),var(--mint))}.funnel-row strong{font-size:9px;text-align:right}.segment-list{display:grid;gap:7px}.segment{padding:11px;border-radius:13px;background:#14191f;border:1px solid rgba(255,255,255,.055);display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;cursor:pointer;transition:.16s ease}.segment:hover,.segment.active{border-color:rgba(71,239,196,.3);background:#16201f}.segment b{font-size:9px}.segment span{display:block;font-size:7px;color:#67707a;margin-top:4px}.segment strong{font-size:10px;color:#fff}.segment .priority{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}.segment .priority small{font-size:7px;color:#5f6872}.priority-chip{font-size:7px;padding:4px 6px;border-radius:999px;background:rgba(71,239,196,.08);color:var(--mint);border:1px solid rgba(71,239,196,.13)}
+.line-chart{height:184px;position:relative;border-radius:14px;background:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px);background-size:100% 36px;overflow:hidden}.line-chart svg{width:100%;height:100%}.insight-box{padding:13px;border-radius:14px;background:linear-gradient(135deg,rgba(128,104,255,.11),rgba(71,239,196,.06));border:1px solid rgba(128,104,255,.16)}.insight-box small{font-size:7px;color:#8f97a1}.insight-box b{display:block;font-size:11px;line-height:1.5;margin-top:5px}.insight-box p{font-size:8px;color:#76808b;line-height:1.55;margin:6px 0 0}.demo-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}.source-card{padding:14px;border-radius:17px;background:#181d23;border:1px solid rgba(255,255,255,.06)}.source-card .source-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.source-name{font-size:9px;font-weight:850}.source-status{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 4px rgba(71,239,196,.08)}.source-card span{display:block;font-size:7px;color:#68717c;margin-top:7px}.source-card b{display:block;font-size:13px;margin-top:6px}
+.demo-disclaimer{margin-top:11px;font-size:8px;color:#5e6670;text-align:right}
+
+/* ---------- one-click ---------- */
+.ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center;margin-top:50px}.ops-console{background:#0e1115;color:#fff;border-radius:30px;padding:24px;min-height:520px;box-shadow:0 32px 70px rgba(10,12,15,.18)}.console-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.07)}.console-head b{font-size:13px}.console-head span{font-size:8px;color:#717983}.console-list{display:grid;gap:8px;margin-top:17px}.console-row{padding:14px;border-radius:15px;background:#14191f;border:1px solid rgba(255,255,255,.055);display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center}.check{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1px rgba(255,255,255,.04)}.check:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,0))}.check svg{position:relative;z-index:1;width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}.check.gpt{background:linear-gradient(135deg,rgba(71,239,196,.18),rgba(44,92,83,.22));color:#54efd0}.check.event{background:linear-gradient(135deg,rgba(105,92,255,.18),rgba(57,50,121,.22));color:#a69eff}.check.meta{background:linear-gradient(135deg,rgba(96,161,255,.18),rgba(47,78,126,.22));color:#8fc2ff}.check.window{background:linear-gradient(135deg,rgba(255,167,94,.18),rgba(114,73,40,.22));color:#ffbf82}.check.report{background:linear-gradient(135deg,rgba(239,95,167,.18),rgba(111,43,80,.22));color:#ffa6d1}.console-row b{font-size:10px}.console-row span{display:block;font-size:7px;color:#6f7882;margin-top:4px}.state{font-size:7px;padding:5px 6px;border-radius:999px;color:#979fa8;border:1px solid rgba(255,255,255,.07)}.console-launch{width:100%;margin-top:14px;border:0;padding:13px;border-radius:14px;background:var(--mint);font-weight:900;color:#07100d;font-size:10px}.console-log{margin-top:12px;padding:11px;border-radius:12px;background:#0b0e12;border:1px solid rgba(255,255,255,.05);font-size:7px;color:#6d7680;line-height:1.7;min-height:72px}.ops-copy h3{font-size:41px;line-height:1.12;letter-spacing:-.05em;margin:0;word-break:keep-all}.ops-copy p{font-size:14px;color:#72767d;line-height:1.85;margin:18px 0 0}.ops-list{display:grid;gap:15px;margin-top:29px}.ops-item{display:grid;grid-template-columns:34px 1fr;gap:13px;align-items:start}.ops-item i{width:34px;height:34px;border-radius:11px;background:#e9e8e3;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:900}.ops-item b{font-size:14px}.ops-item span{display:block;font-size:11px;color:#797d83;line-height:1.55;margin-top:4px}
+
+/* ---------- AI recommendation ---------- */
+.ai-stage{display:grid;grid-template-columns:1fr .85fr;gap:16px;margin-top:50px}.ai-main{border-radius:30px;padding:30px;background:#15191f;color:#fff;position:relative;overflow:hidden;min-height:380px}.ai-main:after{content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(128,104,255,.25),transparent 68%)}.ai-label{display:inline-flex;gap:7px;align-items:center;padding:7px 9px;border-radius:999px;background:rgba(128,104,255,.1);border:1px solid rgba(128,104,255,.17);font-size:8px;color:#bcaeff;font-weight:900}.ai-main h3{font-size:34px;line-height:1.16;letter-spacing:-.045em;margin:23px 0 14px;max-width:600px;word-break:keep-all}.ai-main p{font-size:12px;color:#9198a1;line-height:1.7;max-width:620px}.ai-impact{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:28px}.impact{padding:13px;border-radius:14px;background:#1a2026;border:1px solid rgba(255,255,255,.06)}.impact small{font-size:7px;color:#69727c}.impact b{display:block;font-size:16px;margin-top:6px}.impact em{display:block;font-style:normal;font-size:7px;color:var(--mint);margin-top:3px}.ai-side{display:grid;gap:10px}.rec-card{padding:21px;border-radius:24px;background:#faf9f6;border:1px solid #dcdbd5}.rec-card .rec-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.rec-card small{font-size:8px;color:#8a8d92;text-transform:uppercase;letter-spacing:.1em}.rec-card .score{font-size:8px;padding:5px 7px;border-radius:999px;background:#e7fff7;color:#148666;font-weight:900}.rec-card b{display:block;font-size:17px;line-height:1.45;margin-top:13px}.rec-card p{font-size:10px;color:#767a80;line-height:1.6;margin:7px 0 0}
+
+/* ---------- security ---------- */
+.security-section{background:#eae9e4}.security-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:42px;margin-top:50px;align-items:start}.security-copy{padding-top:12px}.security-copy h3{font-size:36px;line-height:1.16;letter-spacing:-.045em;margin:0}.security-copy p{font-size:13px;color:#6e7278;line-height:1.85;margin-top:16px}.security-points{display:grid;gap:9px;margin-top:22px}.security-points div{display:flex;align-items:center;gap:9px;font-size:11px;color:#484d54}.security-points i{width:22px;height:22px;border-radius:8px;background:#d8fff3;display:grid;place-items:center;font-style:normal;color:#148666;font-size:8px;font-weight:900}.connector-stack{display:grid;gap:9px}.connector{padding:17px 18px;border-radius:19px;background:#f8f7f3;border:1px solid #d8d7d1;display:grid;grid-template-columns:44px 1fr auto;gap:13px;align-items:center}.connector-icon{width:44px;height:44px;border-radius:14px;background:#11151a;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900}.connector b{font-size:13px}.connector span{display:block;font-size:9px;color:#81858b;margin-top:4px}.connector .perm{font-size:8px;font-weight:850;padding:6px 8px;border-radius:999px;background:#ecebe6;color:#62666c}.connector .perm.ready{background:#e2fff5;color:#148666}
+
+/* ---------- use cases ---------- */
+.use-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:50px}.use-card{padding:28px;border-radius:27px;background:#faf9f6;border:1px solid #dcdbd5;min-height:300px}.use-card .role{font-size:8px;color:#9b9ea3;letter-spacing:.12em;text-transform:uppercase}.use-card h3{font-size:23px;line-height:1.25;margin:18px 0 11px}.use-card p{font-size:11px;color:#757980;line-height:1.7}.use-card ul{list-style:none;padding:0;margin:23px 0 0;display:grid;gap:9px}.use-card li{font-size:10px;color:#555a61;display:flex;gap:8px;line-height:1.5}.use-card li:before{content:"↳";color:#8d72ff;font-weight:900}
+
+/* ---------- faq ---------- */
+.faq-grid{margin-top:48px;border-top:1px solid #d8d7d1}.faq-item{border-bottom:1px solid #d8d7d1}.faq-q{width:100%;border:0;background:transparent;display:grid;grid-template-columns:48px 1fr 34px;gap:13px;align-items:center;text-align:left;padding:22px 0}.faq-q .qno{font-family:Consolas,monospace;font-size:9px;color:#999da2}.faq-q b{font-size:15px}.faq-plus{width:28px;height:28px;border-radius:50%;border:1px solid #d2d1cb;display:grid;place-items:center;font-size:16px;transition:.2s ease}.faq-a{max-height:0;overflow:hidden;transition:max-height .28s ease}.faq-a p{padding:0 62px 22px;margin:0;max-width:960px;font-size:12px;line-height:1.8;color:#74787e}.faq-item.open .faq-a{max-height:180px}.faq-item.open .faq-plus{transform:rotate(45deg);background:#11151a;color:#fff;border-color:#11151a}
+
+/* ---------- CTA ---------- */
+.final{padding:80px 0 110px}.final-card{border-radius:36px;background:#0b0e12;color:#fff;padding:58px;position:relative;overflow:hidden;box-shadow:0 40px 100px rgba(10,12,15,.2)}.final-card:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 25%,rgba(71,239,196,.16),transparent 25%),radial-gradient(circle at 95% 90%,rgba(128,104,255,.2),transparent 33%),linear-gradient(rgba(255,255,255,.027) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.027) 1px,transparent 1px);background-size:auto,auto,42px 42px,42px 42px}.final-inner{position:relative;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:end}.final h2{font-size:clamp(42px,5vw,72px);line-height:1.04;letter-spacing:-.06em;margin:0;word-break:keep-all}.final h2 span{color:var(--mint)}.final p{font-size:13px;color:#9097a1;line-height:1.75;margin:22px 0 0;max-width:680px}.final-action{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.final-action .btn-light{border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#fff}.footer{padding:24px 0 34px;color:#92959a;font-size:9px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.footer b{color:#464b52}
+
+/* modal */
+.modal-backdrop{position:fixed;inset:0;z-index:300;background:rgba(7,9,12,.58);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px}.modal-backdrop.show{display:flex}.modal{width:min(720px,96vw);border-radius:28px;background:#f8f7f3;border:1px solid #deddd8;box-shadow:0 45px 100px rgba(0,0,0,.28);overflow:hidden}.modal-head{padding:22px 24px;border-bottom:1px solid #dfded8;display:flex;justify-content:space-between;gap:14px;align-items:center}.modal-head b{font-size:18px}.modal-close{border:0;width:35px;height:35px;border-radius:50%;background:#e9e8e3;font-size:17px}.modal-body{padding:22px 24px}.setup-preview{display:grid;gap:8px}.setup-row{padding:14px;border-radius:16px;border:1px solid #dfded8;background:#fff;display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center}.setup-no{width:30px;height:30px;border-radius:9px;background:#11151a;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:900}.setup-row b{font-size:11px}.setup-row span{display:block;font-size:9px;color:#82868c;margin-top:3px}.setup-status{font-size:8px;padding:5px 7px;border-radius:999px;background:#e6fff6;color:#148666;font-weight:900}
+.toast{position:fixed;right:22px;bottom:22px;z-index:500;padding:12px 14px;border-radius:14px;background:#11151a;color:#fff;font-size:10px;font-weight:800;box-shadow:0 18px 45px rgba(0,0,0,.22);opacity:0;transform:translateY(12px);transition:.2s ease}.toast.show{opacity:1;transform:none}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(18px);transition:.6s cubic-bezier(.2,.7,.2,1)}.reveal.in{opacity:1;transform:none}
+
+@media(max-width:1180px){
+  .hero-grid{grid-template-columns:1fr;gap:45px}.orbit-card{max-width:820px}.signal-panel{grid-template-columns:1fr 1fr}.signal-intro{grid-column:1/-1}.problem-wrap,.ops-grid,.security-grid,.ai-stage{grid-template-columns:1fr}.problem-quote{position:relative;top:auto}.bridge-flow{grid-template-columns:repeat(3,1fr)}.bridge-flow:before{display:none}.metrics-grid{grid-template-columns:1fr 1fr}.feature-card.large,.feature-card.small,.feature-card.half{grid-column:span 6}.demo-app{grid-template-columns:180px 1fr}.use-grid{grid-template-columns:1fr 1fr}.final-inner{grid-template-columns:1fr}.final-action{justify-content:flex-start}
+}
+@media(max-width:820px){
+  .wrap{width:min(100% - 28px,var(--max))}.navbar{border-radius:20px;padding:9px 10px}.navlinks{display:none}.nav-actions .btn-light{display:none}.section{padding:78px 0}.hero{padding-top:125px}.hero h1{font-size:54px}.orbit-card{min-height:610px}.arch-node{width:126px}.n2{left:36%}.signal-panel{grid-template-columns:1fr}.signal-intro{grid-column:auto}.bridge-flow{grid-template-columns:1fr 1fr}.metrics-grid{grid-template-columns:1fr 1fr}.feature-grid{grid-template-columns:1fr}.feature-card.large,.feature-card.small,.feature-card.half{grid-column:auto}.demo-app{grid-template-columns:1fr}.demo-sidebar{display:none}.demo-grid{grid-template-columns:1fr}.demo-bottom{grid-template-columns:1fr}.use-grid{grid-template-columns:1fr}.final-card{padding:38px 26px}.ai-impact{grid-template-columns:1fr}.security-grid{gap:25px}
+}
+@media(max-width:560px){
+  .hero h1{font-size:43px}.hero .lead{font-size:15px}.hero-actions{display:grid;grid-template-columns:1fr}.hero-actions .btn{width:100%}.orbit-card{min-height:680px}.arch{height:535px}.arch-node{width:118px;padding:10px}.n1{top:9%;left:2%}.n2{left:auto;right:2%;top:6%}.n3{right:3%;top:41%}.n4{left:3%;bottom:6%}.n5{right:4%;bottom:3%}.arch-core{top:47%;width:120px;height:120px}.metrics-grid{grid-template-columns:1fr}.bridge-flow{grid-template-columns:1fr}.demo-main{padding:14px}.kpi-row{grid-template-columns:1fr 1fr}.funnel-row{grid-template-columns:74px 1fr 48px}.final-card{padding:30px 20px}.final h2{font-size:39px}.faq-q{grid-template-columns:34px 1fr 30px}.faq-a p{padding-left:47px}.connector{grid-template-columns:40px 1fr}.connector .perm{grid-column:2}.ops-console{padding:16px}.console-row{grid-template-columns:26px 1fr}.state{grid-column:2;justify-self:start}.ai-main{padding:23px}.ai-main h3{font-size:29px}
+}
+
+/* ---------- GPT organic + ads visual journey ---------- */
+.journey-section{padding:28px 0 88px;background:#f4f2ed;border-top:1px solid #dfddd7;border-bottom:1px solid #dedcd6}
+.journey-head{display:grid;grid-template-columns:1fr .8fr;gap:36px;align-items:end;margin-bottom:34px}
+.journey-head h2{font-size:clamp(38px,4.5vw,62px);line-height:1.02;letter-spacing:-.055em;margin:0;word-break:keep-all}
+.journey-head h2 span{color:#735bff}.journey-head p{font-size:13px;line-height:1.85;color:#72767c;margin:0;max-width:600px;justify-self:end}
+.journey-board{border-radius:34px;background:#0d1014;color:#fff;padding:18px;box-shadow:0 36px 90px rgba(12,14,18,.18);position:relative;overflow:hidden}
+.journey-board:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 12%,rgba(115,91,255,.2),transparent 26%),radial-gradient(circle at 82% 82%,rgba(71,239,196,.12),transparent 26%),linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:auto,auto,40px 40px,40px 40px;pointer-events:none}
+.journey-grid{position:relative;display:grid;grid-template-columns:1.02fr .14fr 1fr .14fr .78fr .14fr 1.02fr;gap:8px;align-items:center}
+.journey-card{min-width:0;border-radius:24px;background:#171b21;border:1px solid rgba(255,255,255,.075);padding:15px;min-height:420px;display:flex;flex-direction:column}
+.journey-card .stage{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.journey-card .stage small{font-family:Consolas,monospace;color:#707987;font-size:8px;letter-spacing:.08em}.journey-card .stage b{font-size:11px}.journey-arrow{display:grid;place-items:center;color:#8068ff;font-size:26px;font-weight:900}.journey-tag{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border-radius:999px;background:rgba(128,104,255,.12);color:#b8aaff;border:1px solid rgba(128,104,255,.2);font-size:8px;font-weight:900}.journey-tag.mint{background:rgba(71,239,196,.1);border-color:rgba(71,239,196,.18);color:#74f0d0}
+.chat-window,.shop-window,.insta-window{border-radius:19px;background:#f8f8f6;color:#11151a;overflow:hidden;border:1px solid #e2e1dc;box-shadow:0 20px 45px rgba(0,0,0,.16)}
+.window-top{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;border-bottom:1px solid #e4e3df;font-size:10px;font-weight:900}.window-dots{display:flex;gap:4px}.window-dots i{width:5px;height:5px;border-radius:50%;background:#c9c8c3}
+.chat-body{padding:13px;display:grid;gap:10px}.chat-user{justify-self:end;max-width:86%;padding:10px 11px;border-radius:14px 14px 3px 14px;background:#e9e6ff;font-size:10px;line-height:1.55}.chat-ai{padding:11px;border-radius:14px;background:#fff;border:1px solid #e4e3df;font-size:9px;line-height:1.65}.chat-result{margin-top:8px;padding:10px;border-radius:12px;background:#f2f0ff;border:1px solid #ddd6ff}.chat-result small{display:block;color:#7664db;font-size:7px;font-weight:900;margin-bottom:4px}.chat-result b{font-size:10px}.chat-result span{display:block;margin-top:4px;font-size:8px;color:#73777d}.chat-source-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.chat-source{padding:8px;border-radius:10px;background:#13171c;color:#fff}.chat-source small{display:block;color:#858d97;font-size:7px}.chat-source b{display:block;font-size:9px;margin-top:4px}.chat-source.organic b{color:#74f0d0}.chat-source.ads b{color:#b8aaff}
+.shop-hero{height:142px;background:linear-gradient(145deg,#ebe9e2,#f8f7f3);display:grid;place-items:center;position:relative}.product-bottle{width:56px;height:92px;border-radius:15px 15px 11px 11px;background:linear-gradient(90deg,#fff,#e9e7e1);box-shadow:0 18px 26px rgba(45,47,50,.13);position:relative}.product-bottle:before{content:"";position:absolute;top:-11px;left:18px;width:20px;height:15px;border-radius:6px 6px 2px 2px;background:#dcd9d2}.product-bottle:after{content:"PURE";position:absolute;left:0;right:0;top:43px;text-align:center;font-size:6px;color:#858179;letter-spacing:.12em}.shop-copy{padding:13px}.shop-copy small{font-size:7px;color:#8b8e93}.shop-copy h4{font-size:14px;line-height:1.35;margin:6px 0}.shop-copy p{font-size:8px;line-height:1.55;color:#74787e;margin:0}.shop-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:11px}.shop-actions span{padding:8px;border-radius:9px;text-align:center;font-size:8px;font-weight:900;background:#ecebe6}.shop-actions span:last-child{background:#11151a;color:#fff}.exit-banner{margin-top:auto;padding:11px;border-radius:14px;background:#241f35;border:1px solid rgba(128,104,255,.25)}.exit-banner small{font-size:7px;color:#9b8cf4}.exit-banner b{display:block;font-size:11px;margin-top:5px}.exit-banner span{display:block;font-size:8px;color:#a3a8af;margin-top:5px;line-height:1.5}
+.segment-core{margin:auto 0;padding:20px 14px;border-radius:24px;background:linear-gradient(180deg,#1b2026,#12161a);border:1px solid rgba(255,255,255,.08);text-align:center}.segment-users{display:flex;justify-content:center;margin-bottom:14px}.segment-users i{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#8068ff,#47efc4);border:3px solid #15191e;margin-left:-8px}.segment-users i:first-child{margin-left:0}.segment-core small{display:block;color:#727b85;font-size:7px;letter-spacing:.08em}.segment-core b{display:block;font-size:15px;line-height:1.35;margin-top:6px}.segment-core strong{display:block;font-size:30px;margin-top:12px;color:#7af0d1}.segment-core span{display:block;font-size:8px;color:#8a929b;margin-top:6px;line-height:1.5}.segment-rule{margin-top:13px;display:grid;gap:6px}.segment-rule em{font-style:normal;padding:7px 8px;border-radius:9px;background:#20262d;color:#aeb4bc;font-size:7px}.segment-rule em:last-child{color:#ffb1b8}
+.insta-window .window-top{font-family:Georgia,serif;font-size:14px}.insta-profile{padding:10px 12px;display:flex;align-items:center;gap:8px}.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ffbe55,#d851ff,#6d67ff);padding:2px}.avatar:before{content:"";display:block;width:100%;height:100%;border-radius:50%;background:#f4f3ef}.insta-profile b{font-size:9px}.insta-profile small{display:block;font-size:7px;color:#888c92;margin-top:2px}.insta-ad{height:170px;background:linear-gradient(145deg,#e9e8e2,#fbfaf7);position:relative;display:grid;place-items:center}.insta-ad .product-bottle{transform:scale(1.12)}.insta-ad-copy{position:absolute;left:14px;top:13px;max-width:108px}.insta-ad-copy small{font-size:7px;color:#6d65ba;font-weight:900}.insta-ad-copy b{display:block;font-size:14px;line-height:1.25;margin-top:5px}.insta-actions{padding:10px 12px}.insta-actions .icons{font-size:13px;letter-spacing:5px}.insta-actions p{font-size:8px;line-height:1.55;color:#555a61}.insta-cta{padding:8px;border-radius:9px;background:#8068ff;color:#fff;text-align:center;font-size:8px;font-weight:900}.journey-caption{position:relative;margin-top:14px;padding:13px 15px;border-radius:16px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap}.journey-caption b{font-size:10px}.journey-caption span{font-size:8px;color:#89919a}.journey-caption .important{color:#74f0d0;font-weight:900}.journey-simple{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}.journey-simple span{padding:7px 9px;border-radius:999px;background:#e6e2ff;color:#6650d7;font-size:8px;font-weight:900}.journey-simple span:nth-child(3){background:#dffbf3;color:#147b61}
+@media(max-width:1180px){.journey-grid{grid-template-columns:1fr 42px 1fr}.journey-grid .journey-arrow:nth-of-type(4),.journey-grid .journey-arrow:nth-of-type(6){display:none}.journey-card.segment-card{grid-column:1/-1;min-height:auto}.segment-core{margin:0}.journey-head{grid-template-columns:1fr}}
+@media(max-width:760px){.journey-grid{grid-template-columns:1fr}.journey-arrow{transform:rotate(90deg);height:30px}.journey-card{min-height:auto}.journey-card.segment-card{grid-column:auto}.journey-head h2{font-size:40px}}
+
+
+
+/* =========================================================
+   v1.2 Journey Experience Upgrade
+   - clearer 4-step customer journey
+   - realistic ChatGPT / commerce / Meta UI mockups
+   - larger visual hierarchy and legibility
+   ========================================================= */
+.journey-section{padding:42px 0 96px;background:#f4f2ed;border-top:1px solid #dfddd7;border-bottom:1px solid #dedcd6}
+.journey-head{grid-template-columns:1.08fr .92fr;gap:46px;margin-bottom:30px;align-items:end}
+.journey-head h2{max-width:760px;font-size:clamp(34px,4.2vw,58px);line-height:1.08;letter-spacing:-.05em;text-wrap:balance}
+.journey-head p{font-size:14px;line-height:1.82;max-width:560px;color:#666c74;text-wrap:pretty}
+.journey-simple span{font-size:9px;padding:8px 11px}
+.journey-head,.journey-card,.journey-card *{overflow-wrap:break-word} .journey-card b,.journey-card span,.journey-card p,.journey-card small{word-break:keep-all}
+
+.journey-board.journey-v2{padding:16px;border-radius:32px;background:
+  radial-gradient(circle at 10% 0%,rgba(115,91,255,.20),transparent 28%),
+  radial-gradient(circle at 82% 96%,rgba(71,239,196,.12),transparent 28%),
+  #0a0e14;
+  box-shadow:0 34px 90px rgba(8,12,18,.22);border:1px solid rgba(255,255,255,.06)}
+.journey-v2 .journey-grid{grid-template-columns:minmax(0,1.05fr) 38px minmax(0,1.05fr) 38px minmax(0,.98fr) 38px minmax(0,1.05fr);gap:8px;align-items:start}
+.journey-v2 .journey-card{min-height:auto;padding:18px;border-radius:24px;background:linear-gradient(180deg,#121823 0%,#10151e 100%);border:1px solid rgba(129,156,211,.22);box-shadow:inset 0 1px rgba(255,255,255,.035);position:relative;overflow:hidden}
+.journey-v2 .journey-card:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(104,112,255,.05),transparent 38%);pointer-events:none}
+.journey-v2 .stage{position:relative;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;margin-bottom:14px}
+.journey-v2 .stage-no{font-size:44px;line-height:.9;font-weight:950;letter-spacing:-.07em;background:linear-gradient(180deg,#77f0dc 0%,#7a6bff 58%,#9d67ff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;min-width:54px}
+.journey-v2 .stage-copy{padding-top:1px;min-width:0}.journey-v2 .stage-copy b{display:block;font-size:15px;line-height:1.26;letter-spacing:-.03em;color:#fff;word-break:keep-all}.journey-v2 .stage-copy span{display:block;margin-top:4px;color:#a6b0c0;font-size:8.5px;line-height:1.55;word-break:keep-all}
+.journey-v2 .journey-arrow{font-size:34px;color:#735bff;text-shadow:0 0 22px rgba(115,91,255,.5)}
+.journey-v2 .journey-arrow:after{content:"";width:26px;height:2px;background:linear-gradient(90deg,#6e5cff,#53e4ca);border-radius:999px;position:absolute;opacity:.35}
+
+.journey-v2 .screen{position:relative;border-radius:18px;background:#fff;color:#11151a;overflow:hidden;border:1px solid rgba(255,255,255,.65);box-shadow:0 22px 55px rgba(0,0,0,.28)}
+.journey-v2 .screen-top{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 13px;border-bottom:1px solid #e9e9e6;background:#fff;font-size:10px;font-weight:900}
+.journey-v2 .screen-top .dots{display:flex;gap:4px}.journey-v2 .screen-top .dots i{width:4px;height:4px;border-radius:50%;background:#c3c7cd}
+
+/* ChatGPT mock */
+.journey-v2 .gpt-screen{height:372px;display:flex;flex-direction:column}
+.journey-v2 .gpt-screen .screen-top b{font-size:11px}
+.journey-v2 .gpt-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;background:linear-gradient(180deg,#fbfbfa,#f6f6f3)}
+.journey-v2 .gpt-logo-row{display:flex;align-items:center;gap:8px;font-weight:900;font-size:10px}.journey-v2 .gpt-logo{width:27px;height:27px;border-radius:9px;background:#10151b;color:#fff;display:grid;place-items:center;font-size:13px}
+.journey-v2 .gpt-context{display:flex;gap:6px;flex-wrap:wrap}.journey-v2 .gpt-context span{padding:5px 8px;border-radius:999px;background:#f0f2f5;border:1px solid #e4e7ec;font-size:6.5px;font-weight:800;color:#6b7280}
+.journey-v2 .gpt-compare{padding:8px 10px;border-radius:12px;background:#fff;border:1px solid #e4e7ea}.journey-v2 .gpt-compare b{display:block;font-size:7.5px;color:#111827}.journey-v2 .gpt-compare span{display:block;margin-top:4px;font-size:6.7px;color:#6b7280;line-height:1.45}
+.journey-v2 .recommend-card{display:grid;grid-template-columns:44px 1fr 18px;gap:9px;align-items:center;padding:9px;border-radius:12px;background:#fff;border:1px solid #e5e6e8;box-shadow:0 6px 14px rgba(16,24,40,.04)}
+.journey-v2 .recommend-info small{display:block;color:#7c8592;font-size:6.4px;margin-top:3px}.journey-v2 .recommend-meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}.journey-v2 .recommend-meta span{padding:3px 5px;border-radius:999px;background:#f4f5f7;border:1px solid #e8eaee;color:#657080;font-size:5.8px;font-weight:800}.journey-v2 .recommend-price{display:block;margin-top:4px;font-size:6.7px;color:#4f46e5;font-weight:900}
+.journey-v2 .msg-user{align-self:flex-end;max-width:83%;padding:10px 11px;border-radius:13px 13px 3px 13px;background:#e7e4ff;color:#1a1830;font-size:9px;line-height:1.55;font-weight:700}
+.journey-v2 .msg-ai{padding:10px 11px;border-radius:13px;background:#fff;border:1px solid #e3e5e8;font-size:8.5px;line-height:1.6;color:#3c434d}
+.journey-v2 .recommend-card{display:grid;grid-template-columns:44px 1fr 18px;gap:9px;align-items:center;padding:9px;border-radius:12px;background:#fff;border:1px solid #e5e6e8}
+.journey-v2 .thumb-bottle{height:48px;border-radius:10px;background:linear-gradient(145deg,#f3f0e9,#fff);display:grid;place-items:center}.journey-v2 .mini-bottle{width:18px;height:34px;border-radius:5px 5px 7px 7px;background:linear-gradient(180deg,#fefefe,#e8e7e3);box-shadow:0 5px 10px rgba(0,0,0,.08);position:relative}.journey-v2 .mini-bottle:before{content:"";position:absolute;top:-6px;left:5px;width:8px;height:7px;border-radius:2px;background:#d8d6d0}.journey-v2 .recommend-card b{font-size:8.4px;line-height:1.35}.journey-v2 .recommend-card span{display:block;margin-top:3px;color:#838991;font-size:6.6px;line-height:1.35}.journey-v2 .recommend-card strong{font-size:14px;color:#5d63ff}
+.journey-v2 .gpt-input{margin-top:auto;height:37px;border:1px solid #d8dadd;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px;color:#7d8592;font-size:7.2px}
+.journey-v2 .source-pills{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}.journey-v2 .source-pill{padding:10px 11px;border-radius:12px;background:#0c1219;border:1px solid rgba(255,255,255,.08)}.journey-v2 .source-pill small{display:block;color:#7f8998;font-size:7px;font-weight:900;letter-spacing:.04em}.journey-v2 .source-pill b{display:block;margin-top:3px;font-size:9px}.journey-v2 .source-pill.organic b{color:#55ebca}.journey-v2 .source-pill.ads b{color:#b294ff}
+.journey-v2 .intent-note{margin-top:12px;padding:11px 12px;border-radius:12px;background:rgba(112,82,255,.12);border:1px solid rgba(125,94,255,.24)}.journey-v2 .intent-note small{display:block;color:#8b7bff;font-size:7px;font-weight:900;margin-bottom:5px}.journey-v2 .intent-note b{display:block;color:#fff;font-size:10px;line-height:1.4}.journey-v2 .intent-note span{display:block;margin-top:4px;color:#9fa7b4;font-size:7.5px;line-height:1.45}
+
+/* Commerce mock */
+.journey-v2 .shop-screen{height:372px}.journey-v2 .shop-visual{height:156px;background:linear-gradient(145deg,#eeeae2,#fbfaf6);position:relative;overflow:hidden;display:grid;place-items:center}.journey-v2 .shop-visual:before{content:"";position:absolute;width:95px;height:54px;border-radius:20px;left:14px;bottom:18px;background:linear-gradient(180deg,#f5f2ea,#e2ddd3);box-shadow:0 -12px 0 #f0ece4,0 -24px 0 #f6f3ed}.journey-v2 .shop-visual:after{content:"";position:absolute;right:20px;top:28px;width:48px;height:70px;border-radius:50% 20% 50% 20%;background:rgba(70,132,80,.28);transform:rotate(-18deg)}
+.journey-v2 .hero-bottle{width:74px;height:128px;border-radius:12px 12px 18px 18px;background:linear-gradient(160deg,#fff,#ebeae5);box-shadow:0 20px 34px rgba(60,56,48,.16);position:relative;z-index:2;display:grid;place-items:center;color:#9b9a96;font-size:12px;letter-spacing:.12em}.journey-v2 .hero-bottle:before{content:"";position:absolute;top:-16px;width:29px;height:18px;border-radius:5px 5px 2px 2px;background:#dfddd8}.journey-v2 .shop-detail{padding:11px 14px 12px}.journey-v2 .shop-detail small{color:#8b8f95;font-size:6.8px}.journey-v2 .shop-detail h4{margin:5px 0 2px;font-size:15px}.journey-v2 .shop-detail p{margin:0;color:#686e76;font-size:7.5px;line-height:1.5}.journey-v2 .shop-rating{display:flex;align-items:center;justify-content:space-between;margin-top:7px}.journey-v2 .shop-rating b{font-size:7px;color:#111827}.journey-v2 .shop-rating span{font-size:6.3px;color:#7b8490}.journey-v2 .shop-rating .star{color:#ffb547;letter-spacing:.08em}
+.journey-v2 .price-line{display:flex;justify-content:space-between;align-items:end;margin-top:8px;gap:8px}.journey-v2 .price-line span{font-size:7.1px;color:#9a9ea4;line-height:1.45}.journey-v2 .price-line b{font-size:14px;white-space:nowrap}.journey-v2 .shop-badges{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}.journey-v2 .shop-badges span{padding:5px 7px;border-radius:999px;background:#f5f6f7;color:#58616d;font-size:6.1px;border:1px solid #e5e7ea}.journey-v2 .shipping-note{margin-top:8px;padding:7px 8px;border-radius:10px;background:#eef7f2;border:1px solid #d7efe1;color:#1f6f55;font-size:6.4px;font-weight:800}
+.journey-v2 .shop-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.journey-v2 .shop-buttons span{padding:9px;border-radius:9px;text-align:center;border:1px solid #d9dde2;font-size:8px;font-weight:900}.journey-v2 .shop-buttons span:last-child{background:#0f141b;color:#fff;border-color:#0f141b}
+.journey-v2 .behavior-title{margin:12px 0 7px;display:flex;align-items:center;gap:6px;color:#d8dce3;font-size:8px;font-weight:900}.journey-v2 .behavior-title:before{content:"";width:12px;height:12px;border-radius:4px;background:linear-gradient(135deg,#7064ff,#47efc4)}.journey-v2 .behavior-chips{display:flex;gap:5px;flex-wrap:wrap}.journey-v2 .behavior-chips span{padding:6px 8px;border-radius:999px;border:1px solid rgba(152,132,255,.25);background:rgba(122,103,255,.08);color:#c5baff;font-size:7px}.journey-v2 .behavior-chips .drop{border-color:rgba(255,112,140,.28);color:#ff9bb0;background:rgba(255,83,115,.08)}
+
+/* Segment */
+.journey-v2 .segment-card{padding-bottom:18px}
+.journey-v2 .segment-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.journey-v2 .toolbar-chip{padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#9ba5b4;font-size:6.8px;font-weight:900;letter-spacing:.05em}
+.journey-v2 .segment-console{border-radius:20px;background:linear-gradient(180deg,#0f141c 0%,#0d1219 100%);border:1px solid rgba(120,133,159,.24);padding:12px;box-shadow:inset 0 1px rgba(255,255,255,.03)}
+.journey-v2 .segment-console-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.journey-v2 .segment-console-top b{font-size:10px;color:#fff}.journey-v2 .segment-console-top span{display:block;font-size:7px;color:#8f9aac;margin-top:2px}
+.journey-v2 .console-status{padding:6px 9px;border-radius:999px;background:rgba(71,239,196,.08);border:1px solid rgba(71,239,196,.18);color:#52efc9;font-size:6.7px;font-weight:900;letter-spacing:.06em}
+.journey-v2 .logic-strip{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:6px;align-items:center;margin-bottom:10px}
+.journey-v2 .logic-box{min-height:72px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(160deg,rgba(48,213,191,.12),rgba(26,35,46,.75))}
+.journey-v2 .logic-box:nth-child(3){background:linear-gradient(160deg,rgba(105,92,255,.15),rgba(26,35,46,.75))}
+.journey-v2 .logic-box:nth-child(5){background:linear-gradient(160deg,rgba(255,78,115,.13),rgba(26,35,46,.75))}
+.journey-v2 .logic-box i{font-style:normal;font-size:16px}.journey-v2 .logic-box b{margin-top:5px;font-size:7.5px;color:#fff}.journey-v2 .logic-box span{margin-top:2px;font-size:6px;color:#8f99a8;line-height:1.35}
+.journey-v2 .logic-plus{font-size:14px;color:#8f96a3}
+.journey-v2 .audience-hero{margin-top:6px;border-radius:18px;padding:14px;background:linear-gradient(135deg,rgba(34,202,211,.15),rgba(101,79,255,.18));border:1px solid rgba(93,141,255,.34)}
+.journey-v2 .audience-hero small{display:block;color:#9faaff;font-size:6.6px;font-weight:900;letter-spacing:.08em}
+.journey-v2 .audience-hero b{display:block;margin-top:5px;font-size:12px;color:#fff}
+.journey-v2 .audience-hero strong{display:block;margin-top:4px;font-size:36px;line-height:1;background:linear-gradient(90deg,#48efca,#7b69ff);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:-.05em}
+.journey-v2 .audience-hero strong em{font-size:12px;font-style:normal;margin-left:2px}
+.journey-v2 .audience-hero p{margin:7px 0 0;color:#aab3c0;font-size:7px;line-height:1.55}
+.journey-v2 .segment-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.journey-v2 .segment-kpi{border-radius:14px;background:#101620;border:1px solid rgba(255,255,255,.06);padding:9px 8px}
+.journey-v2 .segment-kpi small{display:block;color:#8f99a8;font-size:6px;font-weight:900;letter-spacing:.05em}
+.journey-v2 .segment-kpi b{display:block;margin-top:4px;font-size:13px;color:#fff}
+.journey-v2 .segment-kpi span{display:block;margin-top:2px;color:#7fe7cf;font-size:6.4px}
+.journey-v2 .segment-table{margin-top:11px;border-radius:14px;border:1px solid rgba(255,255,255,.07);overflow:hidden;background:#0b1017}
+.journey-v2 .segment-table-head,.journey-v2 .segment-row{display:grid;grid-template-columns:1.35fr .52fr .56fr;gap:8px;align-items:center;padding:8px 10px}
+.journey-v2 .segment-table-head{background:rgba(255,255,255,.03);font-size:6.5px;font-weight:900;color:#9ea8b6;letter-spacing:.06em;text-transform:uppercase}
+.journey-v2 .segment-row{border-top:1px solid rgba(255,255,255,.05)}
+.journey-v2 .segment-row b{display:block;color:#f1f4f7;font-size:7.8px}.journey-v2 .segment-row span{display:block;margin-top:2px;color:#8d97a7;font-size:6.3px;line-height:1.35}
+.journey-v2 .segment-row strong{font-size:8.4px;color:#fff}
+.journey-v2 .priority{justify-self:start;padding:5px 8px;border-radius:999px;font-size:6.1px;font-weight:900;letter-spacing:.04em;border:1px solid rgba(255,255,255,.08)}
+.journey-v2 .priority.high{background:rgba(255,105,133,.10);border-color:rgba(255,105,133,.22);color:#ff9db5}
+.journey-v2 .priority.mid{background:rgba(89,126,255,.10);border-color:rgba(89,126,255,.22);color:#aab8ff}
+.journey-v2 .priority.low{background:rgba(71,239,196,.08);border-color:rgba(71,239,196,.20);color:#7df0d5}
+/* Instagram mock */
+.journey-v2 .insta-screen{height:372px}.journey-v2 .insta-screen .screen-top{font-family:Georgia,serif;font-size:14px}.journey-v2 .insta-head{padding:9px 12px;display:flex;align-items:center;gap:8px}.journey-v2 .insta-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#fbcc5c,#ef3e8d,#725cff);padding:2px}.journey-v2 .insta-avatar:after{content:"";display:block;width:100%;height:100%;border-radius:50%;background:#f7f6f2}.journey-v2 .insta-head b{font-size:8px}.journey-v2 .insta-head small{display:block;color:#90959d;font-size:6px;margin-top:1px}.journey-v2 .insta-image{height:188px;position:relative;background:linear-gradient(145deg,#e9e7df,#fbfaf7);display:grid;place-items:center;overflow:hidden}.journey-v2 .insta-image:before{content:"";position:absolute;right:5px;bottom:-12px;width:100px;height:125px;border-radius:60% 20% 0 0;background:rgba(74,128,72,.2);filter:blur(1px)}.journey-v2 .insta-copy{position:absolute;left:15px;top:18px;max-width:120px;z-index:3}.journey-v2 .insta-copy small{font-size:6px;color:#6268d3;font-weight:900;letter-spacing:.06em}.journey-v2 .insta-copy b{display:block;margin-top:5px;font-size:15px;line-height:1.16;letter-spacing:-.04em}.journey-v2 .insta-image .hero-bottle{transform:translateX(48px) scale(.82)}.journey-v2 .insta-foot{padding:9px 12px 10px}.journey-v2 .insta-icons{font-size:13px;letter-spacing:5px}.journey-v2 .insta-stats{display:flex;justify-content:space-between;align-items:center;margin-top:6px;color:#6b7280;font-size:6.4px}.journey-v2 .insta-stats b{color:#111827;font-size:7px}.journey-v2 .insta-foot p{font-size:7px;line-height:1.48;color:#555c66;margin:7px 0}.journey-v2 .insta-cta{margin-top:8px;padding:9px;border-radius:8px;background:linear-gradient(90deg,#6758ff,#8068ff);color:#fff;text-align:center;font-size:8px;font-weight:900}
+.journey-v2 .recovery-note{margin-top:12px;padding:11px 12px;border-radius:12px;background:rgba(112,82,255,.12);border:1px solid rgba(125,94,255,.22)}.journey-v2 .recovery-note small{display:block;color:#8b7bff;font-size:7px;font-weight:900}.journey-v2 .recovery-note b{display:block;margin-top:5px;color:#fff;font-size:10px;line-height:1.4}.journey-v2 .recovery-note span{display:block;margin-top:4px;color:#a1a9b5;font-size:7.5px;line-height:1.45}
+
+.journey-v2 .journey-caption{padding:12px 15px;margin-top:12px;border-radius:14px;background:rgba(16,24,33,.9);border:1px solid rgba(70,239,196,.16)}
+.journey-v2 .journey-caption b{font-size:10px}.journey-v2 .journey-caption>span{font-size:8px;color:#9ca6b4}.journey-v2 .journey-caption .important{color:#48efca}
+
+@media(max-width:1280px){
+  .journey-v2 .journey-grid{grid-template-columns:1fr 34px 1fr;gap:10px}
+  .journey-v2 .journey-card.segment-card,.journey-v2 .journey-card.meta-stage{grid-column:auto}
+  .journey-v2 .journey-arrow:nth-of-type(4){display:none}
+  .journey-v2 .journey-card:nth-of-type(5){grid-column:1}
+  .journey-v2 .journey-card:nth-of-type(7){grid-column:3}
+}
+@media(max-width:860px){
+  .journey-v2 .journey-grid{grid-template-columns:1fr}
+  .journey-v2 .journey-arrow{height:30px;transform:rotate(90deg)}
+  .journey-v2 .journey-card{min-height:auto}
+  .journey-head{grid-template-columns:1fr;gap:18px}
+  .journey-head p{justify-self:start}
+}
+
+
+
+/* =========================================================
+   v1.7 Typography & Readability Refinement
+   - remove forced line breaks from editorial copy
+   - balanced headings / pretty paragraphs
+   - calmer type scale and line length
+   ========================================================= */
+.section-title,
+.journey-head h2,
+.problem-quote h3,
+.feature-card h3,
+.ops-copy h3,
+.ai-main h3,
+.security-copy h3,
+.use-card h3,
+.final h2,
+.final-card h2{
+  text-wrap:balance;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+.section-lead,
+.problem-quote p,
+.pain-item p,
+.feature-card p,
+.ops-copy p,
+.ops-item span,
+.ai-main p,
+.rec-card p,
+.security-copy p,
+.use-card p,
+.use-card li,
+.faq-a p,
+.final p,
+.journey-head p{
+  text-wrap:pretty;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+.section-title{
+  max-width:980px;
+  font-size:clamp(36px,3.75vw,60px);
+  line-height:1.09;
+  letter-spacing:-.045em;
+}
+.section-lead{
+  max-width:780px;
+  font-size:16px;
+  line-height:1.78;
+}
+.journey-head h2{
+  max-width:900px;
+  font-size:clamp(36px,4vw,56px);
+  line-height:1.08;
+  letter-spacing:-.045em;
+}
+.journey-head p{max-width:570px;line-height:1.75}
+.problem-quote h3{font-size:34px;line-height:1.19;letter-spacing:-.04em}
+.problem-quote p{line-height:1.72}
+.pain-item b{font-size:14px;line-height:1.48;word-break:keep-all}
+.pain-item p{line-height:1.62}
+.feature-card h3{font-size:23px;line-height:1.3;letter-spacing:-.035em}
+.feature-card p{font-size:12.5px;line-height:1.7}
+.ops-copy h3{font-size:37px;line-height:1.17;letter-spacing:-.04em;max-width:650px}
+.ops-copy p{max-width:650px;line-height:1.75}
+.ops-item b{line-height:1.4;word-break:keep-all}
+.ai-main h3{font-size:31px;line-height:1.2;letter-spacing:-.04em}
+.ai-main p{line-height:1.68}
+.rec-card b{line-height:1.38;word-break:keep-all}
+.security-copy h3{font-size:32px;line-height:1.2;letter-spacing:-.04em;max-width:540px}
+.security-copy p{line-height:1.75}
+.use-card h3{font-size:21px;line-height:1.32;letter-spacing:-.025em;min-height:auto}
+.use-card p{font-size:11.5px;line-height:1.68}
+.use-card li{line-height:1.48}
+.faq-q b{font-size:15px;line-height:1.45;word-break:keep-all}
+.faq-a p{font-size:12.5px;line-height:1.72;max-width:900px}
+.final h2{font-size:clamp(38px,4.3vw,62px);line-height:1.08;letter-spacing:-.05em;max-width:900px}
+.final p{font-size:13.5px;line-height:1.7;max-width:700px}
+.signal-intro b,.signal-box b,.signal-box span{word-break:keep-all;overflow-wrap:break-word}
+.signal-intro b{line-height:1.42}.signal-box b{line-height:1.35}.signal-box span{line-height:1.5}
+
+@media(max-width:980px){
+  .section-title{font-size:clamp(34px,6vw,48px)}
+  .journey-head h2{font-size:clamp(34px,6vw,48px)}
+  .ops-copy h3,.security-copy h3{font-size:31px}
+}
+@media(max-width:640px){
+  .section-title,.journey-head h2{font-size:34px;line-height:1.12;letter-spacing:-.035em}
+  .section-lead{font-size:15px;line-height:1.72}
+  .problem-quote h3{font-size:29px}
+  .feature-card h3{font-size:21px}
+  .ops-copy h3,.security-copy h3{font-size:28px}
+  .ai-main h3{font-size:27px}
+  .final h2{font-size:36px}
+}
+
+
+/* ---------- cross media extension ---------- */
+.cross-section{padding-top:34px}
+.cross-hero{background:linear-gradient(135deg,#11161e 0%,#101720 55%,#16211f 100%);border:1px solid rgba(129,156,211,.18);border-radius:28px;padding:28px;box-shadow:0 20px 50px rgba(12,18,24,.08)}
+.cross-kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);font-size:11px;font-weight:900;letter-spacing:.05em;color:#d9e0ea;text-transform:uppercase}
+.cross-kicker i{width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 6px rgba(71,239,196,.12)}
+.cross-hero h3{margin:18px 0 0;font-size:38px;line-height:1.18;letter-spacing:-.04em;color:#fff;max-width:920px;word-break:keep-all}
+.cross-hero p{margin:14px 0 0;max-width:760px;color:#a9b4c3;font-size:15px;line-height:1.82;word-break:keep-all}
+.cross-note{margin-top:16px;display:inline-flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:16px;background:rgba(71,239,196,.08);border:1px solid rgba(71,239,196,.16);color:#dffcf5;font-size:13px;line-height:1.65}
+.cross-note b{color:#fff}
+.cross-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:24px}
+.cross-card{background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 16px 36px rgba(15,23,42,.05)}
+.cross-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cross-badge{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:42px;padding:0 10px;border-radius:14px;background:#f1f4f8;font-size:12px;font-weight:900;color:#101828}
+.cross-card small{display:block;margin-top:12px;font-size:11px;font-weight:900;letter-spacing:.04em;color:#7b8592;text-transform:uppercase}
+.cross-card h4{margin:8px 0 0;font-size:20px;line-height:1.25;letter-spacing:-.03em;word-break:keep-all}
+.cross-card p{margin:10px 0 0;font-size:13px;line-height:1.72;color:#667085;word-break:keep-all}
+.cross-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+.cross-pill{padding:7px 10px;border-radius:999px;background:#f7f8fa;border:1px solid #e8ebef;font-size:11px;font-weight:800;color:#51606f}
+.cross-arrow{font-size:18px;font-weight:900;color:#745dff;line-height:1}
+.cross-card ul{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:7px}
+.cross-card li{font-size:12px;color:#51606f;padding-left:15px;position:relative;line-height:1.55;word-break:keep-all}
+.cross-card li:before{content:"";position:absolute;left:0;top:.6em;width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#53efd0,#7c69ff)}
+.cross-bottom{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-top:18px;align-items:start}
+.cross-summary,.cross-cases{background:#fff;border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:0 16px 36px rgba(15,23,42,.05)}
+.cross-summary h4,.cross-cases h4{margin:0;font-size:18px;letter-spacing:-.02em;word-break:keep-all}
+.cross-summary p,.cross-cases p{margin:10px 0 0;font-size:13px;line-height:1.75;color:#667085;word-break:keep-all}
+.cross-case-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.cross-case{padding:12px 14px;border-radius:16px;background:#f8fafc;border:1px solid #ebeff3;font-size:12px;line-height:1.6;color:#52606d;word-break:keep-all}
+.cross-case b{display:block;margin-bottom:4px;color:#111827;font-size:12px}
+@media (max-width:1100px){.cross-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cross-bottom{grid-template-columns:1fr}}
+@media (max-width:760px){.cross-hero{padding:20px}.cross-hero h3{font-size:28px}.cross-hero p{font-size:14px}.cross-grid,.cross-case-list{grid-template-columns:1fr}}
+
+
+/* ---------- performance lab workspace ---------- */
+.performance-section{padding-top:34px}
+.lab-shell{margin-top:34px;border-radius:30px;background:#0c1117;border:1px solid rgba(255,255,255,.07);box-shadow:0 30px 80px rgba(10,14,20,.18);overflow:hidden;color:#fff}
+.lab-topbar{display:grid;grid-template-columns:1fr auto auto;gap:18px;align-items:center;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07);background:#10161e}
+.lab-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:900}.lab-title i{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,#48efc9,#7867ff);box-shadow:0 8px 18px rgba(90,105,255,.2)}
+.lab-meta{font-size:9px;color:#7e8997}.lab-mode{padding:7px 10px;border-radius:999px;background:rgba(71,239,196,.08);border:1px solid rgba(71,239,196,.18);color:#59efd0;font-size:8px;font-weight:900;letter-spacing:.08em}
+.lab-body{display:grid;grid-template-columns:205px minmax(0,1fr);min-height:690px}
+.lab-sidebar{padding:18px 14px;border-right:1px solid rgba(255,255,255,.06);background:#0e1319}
+.lab-nav-title{font-size:8px;color:#626d7b;text-transform:uppercase;letter-spacing:.12em;font-weight:900;margin:2px 8px 10px}.lab-nav{display:grid;gap:5px}.lab-nav button{border:0;background:transparent;color:#87919f;border-radius:10px;padding:10px 11px;text-align:left;font-size:9px;font-weight:850}.lab-nav button.active{background:rgba(112,96,255,.13);color:#fff;border:1px solid rgba(112,96,255,.14)}
+.lab-score{margin-top:18px;padding:14px;border-radius:16px;background:linear-gradient(160deg,rgba(73,238,199,.08),rgba(111,91,255,.1));border:1px solid rgba(121,133,255,.16)}.lab-score small{font-size:7px;color:#8f99a7;font-weight:900;letter-spacing:.08em}.lab-score strong{display:block;margin-top:5px;font-size:31px;letter-spacing:-.05em}.lab-score span{display:block;margin-top:3px;font-size:7px;color:#7ce9d2}
+.lab-main{padding:18px;background:#10151c}
+.lab-main-head{display:flex;justify-content:space-between;align-items:end;gap:14px;margin-bottom:14px}.lab-main-head small{font-size:8px;color:#7d8795;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.lab-main-head h3{margin:4px 0 0;font-size:21px;letter-spacing:-.035em}.scenario-buttons{display:flex;gap:6px}.scenario-buttons button{padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:#151b23;color:#8f99a7;font-size:7px;font-weight:900}.scenario-buttons button.active{background:#6f5eff;color:#fff;border-color:#6f5eff}
+.lab-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.lab-kpi{padding:12px;border-radius:14px;background:#141a22;border:1px solid rgba(255,255,255,.06)}.lab-kpi span{display:block;font-size:7px;color:#808b99}.lab-kpi b{display:block;margin-top:5px;font-size:18px;letter-spacing:-.04em}.lab-kpi em{display:block;margin-top:4px;font-size:7px;color:#65e8ca;font-style:normal}.lab-kpi.loss em{color:#ff9caa}
+.lab-grid{display:grid;grid-template-columns:1.06fr .94fr;gap:10px;margin-top:10px}.lab-card{border-radius:18px;background:#121820;border:1px solid rgba(255,255,255,.06);padding:14px}.lab-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.lab-card-head b{font-size:11px}.lab-card-head span{font-size:7px;color:#76818f}
+.bottleneck-list{display:grid;gap:8px}.bottleneck{display:grid;grid-template-columns:95px 1fr 56px;gap:8px;align-items:center}.bottleneck label{font-size:7.5px;color:#a4adba}.bottleneck .track{height:8px;border-radius:999px;background:#202832;overflow:hidden}.bottleneck .track i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#48efc9,#7060ff)}.bottleneck.bad .track i{background:linear-gradient(90deg,#ff8d86,#ff5f76)}.bottleneck strong{font-size:7.5px;text-align:right;color:#dfe4eb}.bottleneck-note{margin-top:12px;padding:10px;border-radius:12px;background:rgba(255,111,126,.07);border:1px solid rgba(255,111,126,.13);font-size:7.5px;line-height:1.55;color:#c4cbd4}.bottleneck-note b{color:#ff9cab}
+.lever-list{display:grid;gap:12px}.lever{padding-bottom:11px;border-bottom:1px solid rgba(255,255,255,.055)}.lever:last-child{border-bottom:0;padding-bottom:0}.lever-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.lever-top b{font-size:8.5px}.lever-top span{font-size:8px;color:#67e8ca;font-weight:900}.lever p{margin:4px 0 7px;font-size:6.8px;line-height:1.45;color:#788391}.lever input[type=range]{width:100%;accent-color:#6f5eff;height:4px}
+.forecast-card{background:linear-gradient(145deg,rgba(69,238,200,.08),rgba(108,87,255,.12));border-color:rgba(112,132,255,.18)}.forecast-main{display:grid;grid-template-columns:1fr 1fr;gap:8px}.forecast-box{padding:11px;border-radius:14px;background:rgba(11,16,22,.55);border:1px solid rgba(255,255,255,.05)}.forecast-box small{display:block;font-size:6.5px;color:#8692a1}.forecast-box b{display:block;margin-top:4px;font-size:20px}.forecast-box em{display:block;margin-top:3px;color:#5de8c9;font-size:7px;font-style:normal}.forecast-range{margin-top:10px;padding:10px 11px;border-radius:12px;background:#0e141b;border:1px solid rgba(255,255,255,.05)}.forecast-range span{font-size:6.7px;color:#7f8a98}.forecast-range b{display:block;margin-top:5px;font-size:9px;color:#e9edf2}.confidence{display:flex;align-items:center;gap:8px;margin-top:8px}.confidence .track{flex:1;height:6px;border-radius:999px;background:#222a34;overflow:hidden}.confidence .track i{display:block;width:72%;height:100%;background:linear-gradient(90deg,#43ebc6,#7867ff);border-radius:999px}.confidence span{font-size:7px;color:#98a2b0}
+.scenario-table{margin-top:10px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.06)}.scenario-table-head,.scenario-row{display:grid;grid-template-columns:1.25fr repeat(4,.72fr);gap:8px;align-items:center;padding:9px 11px}.scenario-table-head{background:#151b23;color:#778392;font-size:6.7px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}.scenario-row{background:#10161d;border-top:1px solid rgba(255,255,255,.05)}.scenario-row.active{background:linear-gradient(90deg,rgba(72,239,201,.06),rgba(112,96,255,.07))}.scenario-row b{font-size:7.8px}.scenario-row span{font-size:7.2px;color:#a4adba}.scenario-row strong{font-size:8px;color:#fff}.scenario-row .gain{color:#62e8ca}.lab-actionbar{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:10px;padding:11px 12px;border-radius:15px;background:#0d1218;border:1px solid rgba(255,255,255,.06)}.lab-actionbar b{display:block;font-size:9px}.lab-actionbar span{display:block;margin-top:3px;font-size:6.8px;color:#7e8996}.lab-run{border:0;border-radius:11px;padding:10px 13px;background:var(--mint);color:#07110d;font-size:8px;font-weight:950}.lab-footnote{margin-top:8px;font-size:6.8px;color:#697482;line-height:1.55}
+@media(max-width:1180px){.lab-body{grid-template-columns:160px 1fr}.lab-kpis{grid-template-columns:repeat(3,1fr)}.lab-grid{grid-template-columns:1fr}.scenario-table-head,.scenario-row{grid-template-columns:1.2fr repeat(4,.7fr)}}
+@media(max-width:760px){.lab-topbar{grid-template-columns:1fr}.lab-body{grid-template-columns:1fr}.lab-sidebar{display:none}.lab-main{padding:12px}.lab-kpis{grid-template-columns:1fr 1fr}.scenario-table{overflow-x:auto}.scenario-table-head,.scenario-row{min-width:620px}.lab-actionbar{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="navbar">
+    <a class="brand" href="#top">
+      <div class="brand-symbol"></div>
+      <div><b>IntentBridge</b><span>GPT × Meta Growth OS</span></div>
+    </a>
+    <div class="navlinks">
+      <a href="#why">Why</a>
+      <a href="#flow">Flow</a>
+      <a href="#features">Product</a>
+      <a href="#demo">Workspace</a>
+      <a href="#security">Security</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-light" data-modal>자동 설계 미리보기</button>
+      <a class="btn btn-dark" href="#demo">제품 화면 보기 ↘</a>
+    </div>
+  </div>
+</div>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <div class="hero-kicker"><span class="live-dot"></span> AI INTENT → RETARGETING → PURCHASE</div>
+      <h1>GPT에서 찾고,<span class="bridge">Meta로 이어</span><span class="meta">구매까지.</span></h1>
+      <p class="lead">
+        <strong>IntentBridge</strong>는 <b>ChatGPT에서 이미 우리 브랜드에 관심을 보이고 자사몰까지 들어온 고객</b>을 한 번의 이탈로 끝내지 않습니다.
+        바로 구매하지 않은 고객의 행동을 확인하고 Meta에서 다시 만나,
+        <strong>한 번의 GPT 유입을 추가 구매 기회까지 확장</strong>합니다.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-dark" href="#flow">퍼널 구조 보기 →</a>
+        <a class="btn btn-light" href="#demo">Workspace 체험</a>
+        <button class="btn btn-mint" data-modal>자동화 구조 미리보기</button>
+      </div>
+      <div class="hero-note">
+        <span>GPT에서 신규 관심고객 확보</span><span>미구매 고객 다시 공략</span><span>추가 구매·매출 확인</span>
+      </div>
+    </div>
+
+    <div class="orbit-card reveal">
+      <div class="orbit-head">
+        <div><small>Intent orchestration map</small><b>고객 의도가 구매가 되는 경로</b></div>
+        <span class="orbit-status">SYSTEM READY</span>
+      </div>
+      <div class="arch">
+        <svg viewBox="0 0 600 470" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#8068ff" stop-opacity=".9"/><stop offset="1" stop-color="#47efc4" stop-opacity=".9"/></linearGradient>
+          </defs>
+          <path d="M92 115 C210 90 215 165 295 222" fill="none" stroke="url(#g1)" stroke-width="1.2" stroke-dasharray="5 8" opacity=".8"/>
+          <path d="M285 70 C300 130 300 155 300 220" fill="none" stroke="url(#g1)" stroke-width="1.2" stroke-dasharray="5 8" opacity=".7"/>
+          <path d="M505 140 C405 145 390 180 310 225" fill="none" stroke="url(#g1)" stroke-width="1.2" stroke-dasharray="5 8" opacity=".75"/>
+          <path d="M130 380 C210 345 230 280 290 242" fill="none" stroke="url(#g1)" stroke-width="1.2" stroke-dasharray="5 8" opacity=".7"/>
+          <path d="M455 395 C390 330 360 275 315 244" fill="none" stroke="url(#g1)" stroke-width="1.2" stroke-dasharray="5 8" opacity=".8"/>
+        </svg>
+        <div class="arch-node n1"><div class="node-no">01 · Acquire</div><b>GPT Organic + Ads</b><span>오가닉 추천·광고에서 브랜드/상품 클릭 유입을 함께 포착</span><div class="metric"><span>Unique</span><strong>1,284</strong></div></div>
+        <div class="arch-node n2"><div class="node-no">02 · Measure</div><b>GA4</b><span>GPT 유입과 사이트 행동·구매 흐름 분석</span><div class="metric"><span>Sessions</span><strong>1,516</strong></div></div>
+        <div class="arch-node n3"><div class="node-no">03 · Collect</div><b>Pixel / CAPI</b><span>동시에 Meta 재공략 가능한 이벤트 수집</span><div class="metric"><span>Audience</span><strong>742</strong></div></div>
+        <div class="arch-node n4"><div class="node-no">04 · Recover</div><b>Meta RTG</b><span>장바구니·결제이탈 등 고가치 세그먼트 재공략</span><div class="metric"><span>Recovered</span><strong>53</strong></div></div>
+        <div class="arch-node n5"><div class="node-no">05 · Prove</div><b>Integrated ROAS</b><span>GPT 직접 구매 + Meta 추가구매를 통합 측정</span><div class="metric"><span>ROAS</span><strong>428%</strong></div></div>
+        <div class="arch-core"><div class="inner"><div><b>Intent<br/>Bridge</b><span>ORCHESTRATE</span></div></div></div>
+      </div>
+      <div class="orbit-foot"><span>GA4가 Meta로 고객을 보내는 구조가 아닙니다.</span><b>자사몰에서 분석과 수집이 동시에 진행됩니다.</b></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="journey-section" id="journey">
+  <div class="wrap">
+    <div class="journey-head reveal">
+      <div>
+        <div class="eyebrow">01 · CUSTOMER JOURNEY</div>
+        <h2>고객이 GPT에서 관심을 보인 순간, <span>Meta가 구매까지 다시 이어갑니다.</span></h2>
+        <div class="journey-simple"><span>GPT Organic</span><span>ChatGPT Ads</span><span>Meta Retargeting</span></div>
+      </div>
+      <p>GPT 오가닉 추천 또는 광고를 통해 자사몰로 유입된 고객이 바로 구매하지 않아도 끝이 아닙니다. 자사몰에서 발생한 행동 신호를 기준으로 미구매 고객을 분류하고, Instagram·Facebook에서 다시 광고를 노출해 구매를 이어갑니다.</p>
+    </div>
+
+    <div class="journey-board journey-v2 reveal">
+      <div class="journey-grid">
+        <!-- 01 -->
+        <div class="journey-card">
+          <div class="stage"><div class="stage-no">01</div><div class="stage-copy"><b>ChatGPT에서 관심 발생</b><span>고객의 구매 의도가 담긴 질문이 시작점입니다.</span></div></div>
+          <div class="screen gpt-screen">
+            <div class="screen-top"><b>ChatGPT</b><div class="dots"><i></i><i></i><i></i></div></div>
+            <div class="gpt-body">
+              <div class="msg-user">피부가 예민한 아기가 쓸 순한 세제 추천해줘.</div>
+              <div class="gpt-logo-row"><div class="gpt-logo">◎</div><span>ChatGPT</span></div>
+              <div class="gpt-context"><span>저자극</span><span>유아 세제</span><span>구매 고민</span></div>
+              <div class="msg-ai">민감한 아이 피부에 사용할 수 있는 순한 유아 세제를 추천해볼게요. 성분과 자극도 중심으로 보면 좋아요.</div>
+              <div class="recommend-card"><div class="thumb-bottle"><div class="mini-bottle"></div></div><div class="recommend-info"><b>퓨어 베이비 세제</b><span>민감한 아기를 위한 저자극 세제</span><div class="recommend-meta"><span>EWG</span><span>저자극</span></div></div><strong>›</strong></div>
+              <div class="recommend-card"><div class="thumb-bottle"><div class="mini-bottle"></div></div><div class="recommend-info"><b>마일드 베이비 세제</b><span>식물 유래 성분의 순한 세제</span><div class="recommend-meta"><span>무향료</span><span>순한 세정</span></div></div><strong>›</strong></div>
+              <div class="gpt-input"><span>추가 질문 입력하기</span><b>↑</b></div>
+            </div>
+          </div>
+          <div class="source-pills"><div class="source-pill organic"><small>GPT ORGANIC</small><b>추천 링크 클릭</b></div><div class="source-pill ads"><small>GPT ADS</small><b>광고 링크 클릭</b></div></div>
+          <div class="intent-note"><small>HIGH-INTENT ENTRY</small><b>질문 자체가 구매 고민에 가깝습니다.</b><span>IntentBridge는 Organic과 Ads 유입을 하나의 GPT Traffic으로 비교합니다.</span></div>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <!-- 02 -->
+        <div class="journey-card">
+          <div class="stage"><div class="stage-no">02</div><div class="stage-copy"><b>자사몰 방문 후 이탈</b><span>제품을 확인하지만, 구매하지 않고 이탈합니다.</span></div></div>
+          <div class="screen shop-screen">
+            <div class="screen-top"><b>OUR BRAND</b><span>☰ &nbsp;⌕ &nbsp;♡</span></div>
+            <div class="shop-visual"><div class="hero-bottle">PURE</div></div>
+            <div class="shop-detail"><small>민감한 피부를 위한 데일리 케어</small><h4>퓨어 베이비 세제</h4><div class="shop-rating"><b><span class="star">★★★★★</span> 4.8</b><span>리뷰 1,284</span></div><div class="price-line"><span>민감한 피부를 위한 순한 세제</span><b>28,000원</b></div><div class="shop-badges"><span>EWG 그린등급</span><span>저자극 테스트</span><span>무향료</span></div><div class="shipping-note">오늘 주문 시 빠른 출고 가능</div><div class="shop-buttons"><span>장바구니</span><span>지금 구매하기</span></div></div>
+          </div>
+          <div class="behavior-title">주요 사이트 행동 예시</div>
+          <div class="behavior-chips"><span>상품 페이지 조회</span><span>장바구니 담기</span><span>결제 페이지 진입</span><span class="drop">구매 없이 이탈</span></div>
+          <div class="recovery-note"><small>BEHAVIOR SIGNAL</small><b>GA4는 분석하고, Pixel/CAPI는 재공략 이벤트를 수집합니다.</b><span>두 시스템은 같은 자사몰에서 병렬로 작동합니다.</span></div>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <!-- 03 -->
+        <div class="journey-card segment-card">
+          <div class="stage"><div class="stage-no">03</div><div class="stage-copy"><b>미구매 고객 자동 분류</b><span>실제 리타겟팅 대상처럼 세그먼트가 정리됩니다.</span></div></div>
+          <div class="segment-toolbar"><div class="toolbar-chip">SOURCE · GPT TRAFFIC</div><div class="toolbar-chip">WINDOW · LAST 30D</div><div class="toolbar-chip">STATUS · READY FOR META</div></div>
+          <div class="segment-console">
+            <div class="segment-console-top"><div><b>Retargetable Audience Builder</b><span>GPT 유입 + 자사몰 행동 + Purchase 제외</span></div><div class="console-status">SYNC READY</div></div>
+            <div class="logic-strip"><div class="logic-box"><i>◎</i><b>GPT 유입</b><span>Organic / Ads</span></div><div class="logic-plus">+</div><div class="logic-box"><i>▣</i><b>행동 이벤트</b><span>ViewContent · AddToCart · Checkout</span></div><div class="logic-plus">+</div><div class="logic-box"><i>⊘</i><b>구매 제외</b><span>Purchase Complete Excluded</span></div></div>
+            <div class="audience-hero"><small>RETARGETABLE AUDIENCE</small><b>Meta 리타겟팅 가능 고객</b><strong>742<em>명</em></strong><p>GPT를 통해 자사몰에 유입된 고객 중 아직 구매하지 않은 사용자를 재공략 대상으로 분류합니다.</p></div>
+            <div class="segment-kpis"><div class="segment-kpi"><small>상품조회</small><b>412</b><span>가장 넓은 풀</span></div><div class="segment-kpi"><small>장바구니</small><b>198</b><span>고의도 고객</span></div><div class="segment-kpi"><small>결제 이탈</small><b>132</b><span>우선 회수 타깃</span></div></div>
+            <div class="segment-table"><div class="segment-table-head"><div>Audience Segment</div><div>Volume</div><div>Priority</div></div><div class="segment-row"><div><b>결제 이탈 고객</b><span>GPT 유입 ∩ BeginCheckout · Purchase 제외</span></div><strong>132명</strong><div class="priority high">HIGH</div></div><div class="segment-row"><div><b>장바구니 이탈 고객</b><span>GPT 유입 ∩ AddToCart · Purchase 제외</span></div><strong>198명</strong><div class="priority mid">MID</div></div><div class="segment-row"><div><b>상품조회 이탈 고객</b><span>GPT 유입 ∩ ViewContent · Purchase 제외</span></div><strong>412명</strong><div class="priority low">BROAD</div></div></div>
+          </div>
+          <div class="recovery-note"><small>AUDIENCE READY</small><b>가장 가치 있는 미구매 고객부터 우선 공략합니다.</b><span>장바구니·결제이탈 등 행동 강도에 따라 우선순위와 광고 메시지를 다르게 설정할 수 있습니다.</span></div>
+        </div>
+
+        <div class="journey-arrow">→</div>
+
+        <!-- 04 -->
+        <div class="journey-card meta-stage">
+          <div class="stage"><div class="stage-no">04</div><div class="stage-copy"><b>Instagram에서 다시 노출</b><span>관심을 보인 고객에게 맞춤형 광고로 다시 찾아갑니다.</span></div></div>
+          <div class="screen insta-screen">
+            <div class="screen-top"><b>Instagram</b><span>⊞ &nbsp;♡ &nbsp;▷</span></div>
+            <div class="insta-head"><div class="insta-avatar"></div><div><b>ourbrand_official</b><small>Sponsored</small></div></div>
+            <div class="insta-image"><div class="insta-copy"><small>RETARGETING</small><b>지금도,<br/>우리 아이의<br/>순한 선택</b></div><div class="hero-bottle">PURE</div></div>
+            <div class="insta-foot"><div class="insta-icons">♡ ◯ ↗</div><div class="insta-stats"><b>좋아요 328</b><span>클릭 41</span></div><p><b>ourbrand_official</b> 아직도 고민 중이신가요? 다시 확인해보세요.</p><div class="insta-cta">지금 구매하기 ›</div></div>
+          </div>
+          <div class="recovery-note"><small>RECOVERY</small><b>GPT에서 시작된 관심을 Meta가 이어갑니다.</b><span>이후 추가 구매·매출을 IntentBridge에서 통합 성과로 확인합니다.</span></div>
+        </div>
+      </div>
+
+      <div class="journey-caption"><b><span class="important">중요</span> · GPT 질문 내용 자체를 Meta에 넘기는 구조가 아닙니다.</b><span>GPT에서 자사몰로 유입된 고객을 사이트의 Meta Pixel/CAPI 이벤트 기준으로 재공략합니다.</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="signal-strip">
+  <div class="wrap signal-panel reveal">
+    <div class="signal-intro"><small>One Funnel, Four Signals</small><b>GPT에서 들어온 고객이 어디까지 왔고, 얼마나 다시 구매로 이어졌는지만 봅니다.</b></div>
+    <div class="signal-box"><div class="top"><span class="num">01</span><small>Acquire</small></div><b>GPT 관심 고객</b><span>ChatGPT를 통해 새롭게 유입된 고객 규모</span></div>
+    <div class="signal-box"><div class="top"><span class="num">02</span><small>Qualify</small></div><b>첫 방문 미구매</b><span>관심은 있었지만 바로 구매하지 않은 고객</span></div>
+    <div class="signal-box"><div class="top"><span class="num">03</span><small>Recover</small></div><b>다시 만날 고객</b><span>Meta에서 재접촉 가능한 고관여 고객</span></div>
+    <div class="signal-box"><div class="top"><span class="num">04</span><small>Prove</small></div><b>추가 구매·매출</b><span>재공략으로 실제 얼마나 더 구매했는지 확인</span></div>
+  </div>
+</div>
+
+<section class="section" id="why">
+  <div class="wrap">
+    <div class="eyebrow reveal">02 · WHY IT MATTERS</div>
+    <h2 class="section-title reveal">ChatGPT에서 관심을 보인 고객을, <span class="accent">한 번의 방문으로 끝내지 마세요.</span></h2>
+    <p class="section-lead reveal">GPT에서 추천·비교를 거쳐 자사몰까지 들어온 고객은 이미 관심도가 높은 고객입니다. 첫 방문에 바로 구매하지 않았더라도, 행동을 기준으로 다시 찾아가면 <b>같은 유입에서 한 번 더 구매 기회</b>를 만들 수 있습니다.</p>
+
+    <div class="problem-wrap">
+      <div class="problem-quote reveal">
+        <small>THE MISSED OPPORTUNITY</small>
+        <h3>이미 관심을 보인 고객, 그냥 이탈시키고 있지 않나요?</h3>
+        <p>IntentBridge는 AI 검색·추천에서 시작된 관심을 자사몰 행동과 Meta 리타겟팅으로 이어, <b>신규 유입을 실제 구매 기회로 확장</b>하는 성장 퍼널입니다.</p>
+        <div class="tool-cloud"><span>GPT Organic</span><span>ChatGPT Ads</span><span>Source / UTM</span><span>GA4</span><span>Meta Pixel</span><span>CAPI</span><span>Audience</span><span>Meta Ads</span></div>
+      </div>
+      <div class="pain-list reveal">
+        <div class="pain-item"><div class="pain-no">01</div><div><b>GPT에서 어렵게 데려온 고객이 첫 방문 후 사라집니다.</b><p>추천·비교·구매 고민을 거쳐 자사몰까지 들어왔지만 바로 구매하지 않으면 이후 접점 없이 끝날 수 있습니다.</p></div><div class="pain-arrow">↗</div></div>
+        <div class="pain-item"><div class="pain-no">02</div><div><b>장바구니·결제 직전 고객도 그대로 놓치고 있습니다.</b><p>단순 방문자와 구매 직전 고객을 구분하지 않으면 가장 전환 가능성이 높은 고객을 다시 설득할 기회를 잃습니다.</p></div><div class="pain-arrow">↗</div></div>
+        <div class="pain-item"><div class="pain-no">03</div><div><b>GPT 유입이 실제 매출에 얼마나 기여했는지 흐릿합니다.</b><p>직접 구매와 Meta 재공략 추가구매를 함께 봐야 AI 유입 채널의 최종 가치를 제대로 확인할 수 있습니다.</p></div><div class="pain-arrow">↗</div></div>
+        <div class="pain-item"><div class="pain-no">04</div><div><b>같은 광고비로 한 번 더 구매 기회를 만들 수 있습니다.</b><p>GPT 신규 유입을 기존 Meta 리타겟팅과 연결하면 이미 관심을 보인 고객에게 한 번 더 구매를 제안할 수 있습니다.</p></div><div class="pain-arrow">↗</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="dark-section" id="flow">
+  <div class="wrap">
+    <div class="eyebrow reveal">03 · THE BRIDGE</div>
+    <h2 class="section-title reveal">GPT에서 생긴 관심을 <span class="accent">구매 직전까지 놓치지 않습니다.</span></h2>
+    <p class="section-lead reveal">오가닉 추천이든 ChatGPT Ads든, 고객이 GPT를 통해 자사몰에 들어온 순간부터 구매 여정은 시작됩니다. 바로 사지 않은 고객은 행동 강도에 따라 다시 분류하고, Meta에서 다시 만나 <b>관심 → 재방문 → 구매</b>로 이어지게 합니다.</p>
+
+    <div class="bridge-flow reveal">
+      <div class="flow-step"><div class="flow-icon">GPT</div><small>Step 01</small><b>오가닉·광고 유입</b><span>추천·비교·구매 고민이 있는 대화에서 브랜드/상품 링크를 클릭해 자사몰로 유입</span></div>
+      <div class="flow-step"><div class="flow-icon">SRC</div><small>Step 02</small><b>유입 출처 식별</b><span>GPT Ads는 UTM, 오가닉은 식별 가능한 referral/source 기준으로 GPT 유입을 분류</span></div>
+      <div class="flow-step"><div class="flow-icon">GA4</div><small>Step 03</small><b>행동·구매 분석</b><span>유니크, 세션, 상품조회, 장바구니, 구매, 매출 확인</span></div>
+      <div class="flow-step"><div class="flow-icon">META</div><small>Step 04</small><b>미구매자 재공략</b><span>Meta Pixel/CAPI 이벤트 기반으로 구매자 제외 후 재공략</span></div>
+      <div class="flow-step"><div class="flow-icon">₩</div><small>Step 05</small><b>추가 구매 증명</b><span>GPT 직접구매와 Meta 회수구매를 한 퍼널에서 분리·통합 측정</span></div>
+    </div>
+    <div class="flow-caption reveal">
+      <div><strong>핵심 구조</strong> · ChatGPT Organic / Ads → 자사몰 → [GA4 분석 + Meta Pixel/CAPI 수집] → Meta Retargeting → Purchase</div>
+      <div class="logic"><span>ANALYZE</span><span>COLLECT</span><span>SEGMENT</span><span>RECOVER</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="eyebrow reveal">04 · WHAT YOU GAIN</div>
+    <h2 class="section-title reveal">유입 수보다 중요한 건,<br><span class="accent">그 고객이 결국 구매했는가.</span></h2>
+    <p class="section-lead reveal">브랜드별로 GPT에서 몇 명이 들어왔고, 얼마나 구매했고, 놓친 고객 중 몇 명을 Meta가 다시 회수했는지 한 번에 확인합니다.</p>
+
+    <div class="metrics-grid reveal">
+      <div class="metric-card"><span class="chip">+18.4%</span><small>GPT INTEREST</small><b data-count="1284">1,284</b><p>ChatGPT를 통해 새롭게 우리 브랜드에 관심을 보인 고객</p></div>
+      <div class="metric-card"><span class="chip">87.2%</span><small>STILL CONSIDERING</small><b data-count="1118">1,118</b><p>첫 방문에는 구매하지 않았지만 여전히 구매 가능성이 남은 고객</p></div>
+      <div class="metric-card"><span class="chip">66.4%</span><small>READY TO REACH</small><b data-count="742">742</b><p>Meta에서 다시 만나 구매를 제안할 수 있는 고객</p></div>
+      <div class="metric-card"><span class="chip">+53</span><small>EXTRA PURCHASE</small><b data-count="53">53</b><p>재공략을 통해 추가로 만들어낸 구매</p></div>
+    </div>
+
+    <div class="feature-grid">
+      <article class="feature-card large reveal">
+        <div class="feature-index">01 · GPT TRAFFIC CONTROL</div>
+        <h3>GPT에서 우리 브랜드를 찾는 고객을 놓치지 않습니다.</h3>
+        <p>오가닉 추천과 광고 유입을 함께 확인해 AI 채널에서 새롭게 만들어진 관심 고객 규모를 한눈에 봅니다.</p>
+        <div class="feature-list"><span>UTM 자동 생성</span><span>Campaign Naming</span><span>Unique / Session</span><span>Direct Purchase</span></div>
+        <div class="mini-ui"><div><small>GPT Organic</small><b>referral</b></div><div><small>GPT Ads</small><b>paid</b></div><div><small>Traffic Group</small><b>gpt_all</b></div></div>
+      </article>
+      <article class="feature-card small dark reveal">
+        <div class="feature-index">02 · QUALIFY</div>
+        <h3>구매 가능성이 높은 이탈 고객을 따로 구분합니다.</h3>
+        <p>상품조회, 장바구니, 결제 진입처럼 행동이 깊을수록 더 높은 우선순위로 다시 공략합니다.</p>
+        <div class="feature-list"><span>Visit 30D</span><span>ViewContent 14D</span><span>AddCart 7D</span><span>Checkout 7D</span></div>
+      </article>
+      <article class="feature-card half reveal">
+        <div class="feature-index">03 · META AUDIENCE</div>
+        <h3>이미 산 고객은 제외하고, 아직 고민 중인 고객만 다시 만납니다.</h3>
+        <p>구매 완료 고객은 제외하고, 구매 가능성이 남아 있는 고객에게만 Meta 광고를 다시 노출합니다.</p>
+        <div class="feature-list"><span>Purchase Exclusion</span><span>Audience Rule</span><span>Retargeting Window</span></div>
+      </article>
+      <article class="feature-card half reveal">
+        <div class="feature-index">04 · ATTRIBUTION</div>
+        <h3>GPT가 만든 매출과 Meta가 되찾은 매출을 함께 봅니다.</h3>
+        <p>첫 방문에서 바로 산 고객과 재공략 후 구매한 고객을 구분해, GPT 유입의 최종 매출 기여도를 확인합니다.</p>
+        <div class="mini-ui"><div><small>GPT Purchase</small><b>41건</b></div><div><small>Meta Recovery</small><b>53건</b></div><div><small>Total ROAS</small><b>428%</b></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section demo-section" id="demo">
+  <div class="wrap">
+    <div class="eyebrow reveal">04 · INTENTBRIDGE WORKSPACE</div>
+    <h2 class="section-title reveal">한 화면에서 보고 <span class="accent">바로 다음 액션으로.</span></h2>
+    <p class="section-lead reveal">아래는 실제 API 연결 전 제품 구조를 설명하기 위한 DEMO DATA입니다. 최종 구현 후 GA4·Meta·ChatGPT Ads 연결 테스트를 한 번에 진행하는 전제로 설계합니다.</p>
+
+    <div class="demo-shell reveal">
+      <div class="demo-topbar">
+        <div class="demo-logo"><div class="brand-symbol" style="width:27px;height:27px;border-radius:9px"></div> IntentBridge</div>
+        <div class="demo-company">Brand Workspace · 생활가전 A</div>
+        <div class="demo-badge">DEMO DATA</div>
+      </div>
+      <div class="demo-app">
+        <aside class="demo-sidebar">
+          <div class="demo-nav-title">Workspace</div>
+          <div class="demo-nav">
+            <button class="active"><span class="dot"></span>Overview</button>
+            <button><span class="dot"></span>GPT 유입</button>
+            <button><span class="dot"></span>고객 행동</button>
+            <button><span class="dot"></span>Meta 재공략</button>
+            <button><span class="dot"></span>Campaign</button>
+            <button><span class="dot"></span>AI Recommendation</button>
+            <button><span class="dot"></span>Report</button>
+          </div>
+          <div class="demo-side-note"><small>TODAY’S FOCUS</small><b>결제이탈 세그먼트 회수율이 가장 높습니다.</b><span>Meta 예산을 해당 세그먼트에 우선 배분해보세요.</span></div>
+        </aside>
+        <div class="demo-main">
+          <div class="demo-head">
+            <div><small>Growth Overview</small><h3>GPT → Meta 전환 퍼널</h3></div>
+            <div class="demo-period"><button>7D</button><button class="active">30D</button><button>90D</button></div>
+          </div>
+          <div class="kpi-row">
+            <div class="demo-kpi"><span>GPT 유입 유니크</span><b>1,284</b><em>▲ 18.4%</em></div>
+            <div class="demo-kpi"><span>GPT 직접 구매</span><b>41</b><em>CVR 3.2%</em></div>
+            <div class="demo-kpi"><span>Meta 재공략 가능</span><b>742</b><em>66.4% of non-buyers</em></div>
+            <div class="demo-kpi"><span>Meta 추가 구매</span><b>53</b><em>▲ +53 recovered</em></div>
+          </div>
+          <div class="demo-grid">
+            <div class="demo-card">
+              <div class="demo-card-head"><b>고객 여정 퍼널</b><span>Unique users · 30 days</span></div>
+              <div class="funnel-bars">
+                <div class="funnel-row"><label>GPT 유입</label><div class="bar"><i style="width:100%"></i></div><strong>1,284</strong></div>
+                <div class="funnel-row"><label>상품 조회</label><div class="bar"><i style="width:78%"></i></div><strong>1,002</strong></div>
+                <div class="funnel-row"><label>장바구니</label><div class="bar"><i style="width:34%"></i></div><strong>437</strong></div>
+                <div class="funnel-row"><label>결제 진입</label><div class="bar"><i style="width:19%"></i></div><strong>244</strong></div>
+                <div class="funnel-row"><label>GPT 직접 구매</label><div class="bar"><i style="width:7%"></i></div><strong>41</strong></div>
+              </div>
+              <div class="insight-box" style="margin-top:15px"><small>FUNNEL INSIGHT</small><b>장바구니 이후 193명이 결제 단계로 넘어가지 않았습니다.</b><p>Meta 재공략에서는 혜택·배송·후기 소구를 우선 테스트하는 것을 권장합니다.</p></div>
+            </div>
+            <div class="demo-card">
+              <div class="demo-card-head"><b>Meta 재공략 세그먼트</b><span>Click to inspect</span></div>
+              <div class="segment-list" id="segments">
+                <div class="segment"><div><b>GPT 방문 / 미구매 / 30D</b><span>가장 넓은 재공략 풀</span></div><strong>742</strong><div class="priority"><small>Priority</small><span class="priority-chip">NORMAL</span></div></div>
+                <div class="segment"><div><b>상품조회 / 미구매 / 14D</b><span>상품 관심 확인</span></div><strong>496</strong><div class="priority"><small>Priority</small><span class="priority-chip">MEDIUM</span></div></div>
+                <div class="segment"><div><b>장바구니 / 미구매 / 7D</b><span>구매의도 높음</span></div><strong>187</strong><div class="priority"><small>Priority</small><span class="priority-chip">HIGH</span></div></div>
+                <div class="segment active"><div><b>결제진입 / 미구매 / 7D</b><span>가장 높은 회수 가능성</span></div><strong>96</strong><div class="priority"><small>Priority</small><span class="priority-chip">TOP</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="demo-grid">
+            <div class="demo-card">
+              <div class="demo-card-head"><b>직접 구매 vs 회수 구매</b><span>Revenue contribution</span></div>
+              <div class="line-chart">
+                <svg viewBox="0 0 600 180" preserveAspectRatio="none">
+                  <defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#47efc4" stop-opacity=".22"/><stop offset="1" stop-color="#47efc4" stop-opacity="0"/></linearGradient></defs>
+                  <path d="M0 150 C80 145,90 126,145 130 S230 102,280 110 S350 65,405 78 S485 48,600 40 L600 180 L0 180Z" fill="url(#area)"/>
+                  <path d="M0 150 C80 145,90 126,145 130 S230 102,280 110 S350 65,405 78 S485 48,600 40" fill="none" stroke="#47efc4" stroke-width="3"/>
+                  <path d="M0 160 C90 155,130 150,180 142 S260 130,320 118 S420 104,480 91 S545 82,600 72" fill="none" stroke="#8068ff" stroke-width="2" stroke-dasharray="5 6"/>
+                </svg>
+              </div>
+            </div>
+            <div class="demo-card">
+              <div class="demo-card-head"><b>AI 운영 추천</b><span>Rule-based demo</span></div>
+              <div class="insight-box"><small>01 · BUDGET</small><b>Meta 회수 CPA가 GPT 직접 CPA보다 32% 낮습니다.</b><p>총 예산은 유지하면서 Meta RTG 비중을 +8%p 이동하는 안을 제안합니다.</p></div>
+              <div class="insight-box" style="margin-top:8px"><small>02 · SEGMENT</small><b>결제이탈 7D 세그먼트를 가장 먼저 확대하세요.</b><p>대상 규모는 작지만 예상 구매의도가 가장 높은 구간입니다.</p></div>
+            </div>
+          </div>
+          <div class="demo-bottom">
+            <div class="source-card"><div class="source-head"><span class="source-name">GPT Organic + Ads</span><i class="source-status"></i></div><span>고관여 신규 유입</span><b>1,284 Unique</b></div>
+            <div class="source-card"><div class="source-head"><span class="source-name">GA4</span><i class="source-status"></i></div><span>행동·구매 분석</span><b>41 Direct Purchase</b></div>
+            <div class="source-card"><div class="source-head"><span class="source-name">Meta</span><i class="source-status"></i></div><span>재공략·추가 구매</span><b>53 Recovered</b></div>
+          </div>
+          <div class="demo-disclaimer">※ 본 화면의 수치는 제품 설명을 위한 DEMO DATA입니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section performance-section" id="performance-lab">
+  <div class="wrap">
+    <div class="eyebrow reveal">05 · PERFORMANCE LAB</div>
+    <h2 class="section-title reveal">현재 성과를 보는 데서 끝내지 않고, <span class="accent">개선안까지 시뮬레이션합니다.</span></h2>
+    <p class="section-lead reveal">IntentBridge의 두 번째 워크스페이스는 현재 퍼널의 병목을 진단하고, 예산 배분·랜딩 개선·리타겟팅 강도를 바꿨을 때 구매·CPA·ROAS가 어떻게 달라질지 미리 비교하는 성과개선 시뮬레이션 랩입니다.</p>
+
+    <div class="lab-shell reveal">
+      <div class="lab-topbar">
+        <div class="lab-title"><i></i><div>IntentBridge Performance Lab</div></div>
+        <div class="lab-meta mono">brand-a / last 30d / demo forecast</div>
+        <div class="lab-mode">SIMULATION MODE</div>
+      </div>
+      <div class="lab-body">
+        <aside class="lab-sidebar">
+          <div class="lab-nav-title">Performance Workspace</div>
+          <div class="lab-nav">
+            <button class="active">Performance Diagnosis</button>
+            <button>Funnel Bottleneck</button>
+            <button>Budget Simulator</button>
+            <button>Segment Strategy</button>
+            <button>Landing Hypothesis</button>
+            <button>Scenario Compare</button>
+          </div>
+          <div class="lab-score"><small>GROWTH OPPORTUNITY SCORE</small><strong id="growthScore">82</strong><span>개선 여지 높음 · Checkout 병목 우선</span></div>
+        </aside>
+        <div class="lab-main">
+          <div class="lab-main-head">
+            <div><small>Performance diagnosis & forecast</small><h3>성과개선 시뮬레이션</h3></div>
+            <div class="scenario-buttons"><button data-preset="conservative">보수적</button><button data-preset="recommended" class="active">추천안</button><button data-preset="aggressive">공격적</button></div>
+          </div>
+
+          <div class="lab-kpis">
+            <div class="lab-kpi"><span>현재 구매</span><b>94건</b><em>41 Direct + 53 Recovered</em></div>
+            <div class="lab-kpi"><span>현재 매출</span><b>₩13.7M</b><em>Baseline revenue</em></div>
+            <div class="lab-kpi loss"><span>현재 CPA</span><b>₩34,043</b><em>개선 여지 있음</em></div>
+            <div class="lab-kpi"><span>현재 ROAS</span><b>428%</b><em>Baseline</em></div>
+            <div class="lab-kpi"><span>가장 큰 병목</span><b>Checkout</b><em>Purchase CVR 16.8%</em></div>
+          </div>
+
+          <div class="lab-grid">
+            <div class="lab-card">
+              <div class="lab-card-head"><b>퍼널 병목 진단</b><span>현재 고객 여정 기준</span></div>
+              <div class="bottleneck-list">
+                <div class="bottleneck"><label>GPT → View</label><div class="track"><i style="width:78%"></i></div><strong>78.0%</strong></div>
+                <div class="bottleneck"><label>View → Cart</label><div class="track"><i style="width:43.6%"></i></div><strong>43.6%</strong></div>
+                <div class="bottleneck"><label>Cart → Checkout</label><div class="track"><i style="width:55.8%"></i></div><strong>55.8%</strong></div>
+                <div class="bottleneck bad"><label>Checkout → Buy</label><div class="track"><i style="width:16.8%"></i></div><strong>16.8%</strong></div>
+              </div>
+              <div class="bottleneck-note"><b>Primary Bottleneck</b> · 결제 진입 이후 구매 완료율이 가장 낮습니다. 랜딩 혜택보다 <b>결제 단계 불안요소 + 장바구니/결제 이탈 회수</b>가 현재 가장 큰 개선 레버로 분석됩니다.</div>
+            </div>
+
+            <div class="lab-card">
+              <div class="lab-card-head"><b>개선 레버 조정</b><span>실시간 DEMO FORECAST</span></div>
+              <div class="lever-list">
+                <div class="lever"><div class="lever-top"><b>랜딩 전환 개선</b><span id="landingVal">8%</span></div><p>상품 상세 설득력·CTA·후기·혜택 배치를 개선했을 때의 가정치</p><input id="landingLift" type="range" min="0" max="20" value="8"></div>
+                <div class="lever"><div class="lever-top"><b>Meta 재공략 효율 개선</b><span id="rtgVal">15%</span></div><p>결제이탈·장바구니 우선 세그먼트와 소재 최적화 가정치</p><input id="rtgBoost" type="range" min="0" max="30" value="15"></div>
+                <div class="lever"><div class="lever-top"><b>Meta 예산 비중</b><span id="metaVal">42%</span></div><p>총 예산은 유지하고 신규유입과 회수예산의 비중만 조정</p><input id="metaShare" type="range" min="25" max="55" value="42"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lab-grid">
+            <div class="lab-card forecast-card">
+              <div class="lab-card-head"><b>추천 시나리오 예상 결과</b><span>동일 총예산 기준</span></div>
+              <div class="forecast-main">
+                <div class="forecast-box"><small>예상 총 구매</small><b id="forecastPurchase">105건</b><em id="purchaseDelta">▲ +11건</em></div>
+                <div class="forecast-box"><small>예상 총 매출</small><b id="forecastRevenue">₩15.3M</b><em id="revenueDelta">▲ +11.9%</em></div>
+                <div class="forecast-box"><small>예상 CPA</small><b id="forecastCPA">₩30,476</b><em id="cpaDelta">▼ -10.5%</em></div>
+                <div class="forecast-box"><small>예상 ROAS</small><b id="forecastROAS">479%</b><em id="roasDelta">▲ +51%p</em></div>
+              </div>
+              <div class="forecast-range"><span>예상 범위</span><b id="forecastRange">101 ~ 109건 구매 · ROAS 461 ~ 497%</b><div class="confidence"><div class="track"><i id="confidenceBar"></i></div><span id="confidenceText">Forecast confidence 72%</span></div></div>
+            </div>
+            <div class="lab-card">
+              <div class="lab-card-head"><b>AI 개선 우선순위</b><span>Impact × Confidence</span></div>
+              <div class="insight-box"><small>01 · CHECKOUT</small><b>결제이탈 7D를 가장 먼저 회수</b><p>구매 직전 고객군의 메시지·혜택·배송 불안요소를 우선 테스트합니다.</p></div>
+              <div class="insight-box" style="margin-top:8px"><small>02 · BUDGET</small><b>Meta RTG 비중을 42% 수준까지 확대</b><p>신규유입을 끊지 않는 범위에서 회수 효율이 높은 구간으로 일부 예산을 이동합니다.</p></div>
+              <div class="insight-box" style="margin-top:8px"><small>03 · LANDING</small><b>장바구니 직전 구간의 CTA·후기 구조 보강</b><p>상세페이지 조회 대비 장바구니 전환율을 우선 개선합니다.</p></div>
+            </div>
+          </div>
+
+          <div class="scenario-table">
+            <div class="scenario-table-head"><div>Scenario</div><div>Purchase</div><div>Revenue</div><div>CPA</div><div>ROAS</div></div>
+            <div class="scenario-row"><b>현재 성과</b><strong>94건</strong><span>₩13.7M</span><span>₩34,043</span><span>428%</span></div>
+            <div class="scenario-row active"><b>AI 추천안</b><strong id="tablePurchase">105건</strong><span id="tableRevenue">₩15.3M</span><span id="tableCPA">₩30,476</span><span id="tableROAS" class="gain">479%</span></div>
+            <div class="scenario-row"><b>공격적 개선안</b><strong>112건</strong><span>₩16.3M</span><span>₩28,571</span><span class="gain">510%</span></div>
+          </div>
+
+          <div class="lab-actionbar"><div><b>성과개선 시뮬레이션은 실제 집행 전 “어디를 먼저 바꿀지” 우선순위를 잡기 위한 의사결정 보조 기능입니다.</b><span>실데이터 연동 후에는 광고비·전환율·세그먼트 규모를 기준으로 예측 범위를 재학습하는 구조로 확장합니다.</span></div><button class="lab-run" id="labRun">추천 시나리오 다시 계산</button></div>
+          <div class="lab-footnote">※ 위 결과는 제품 기능을 설명하기 위한 DEMO FORECAST이며 실제 성과를 보장하지 않습니다. 최종 서비스에서는 실제 광고주 데이터와 연결 후 시나리오별 예상 범위를 계산하는 방향으로 구현합니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow reveal">06 · ALWAYS-ON RECOVERY</div>
+    <h2 class="section-title reveal">복잡한 세팅은 뒤로, <span class="accent">브랜드는 추가 구매만 봅니다.</span></h2>
+    <div class="ops-grid">
+      <div class="ops-console reveal">
+        <div class="console-head"><b>Campaign Automation Preview</b><span class="mono">workspace / brand-a</span></div>
+        <div class="console-list">
+          <div class="console-row"><span class="check gpt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l2.6 1.5v3L12 10 9.4 8.5v-3L12 4z"></path><path d="M9.4 8.5 6.8 10v3L9.4 14.5l2.6-1.5"></path><path d="M14.6 8.5 17.2 10v3l-2.6 1.5-2.6-1.5"></path></svg></span><div><b>GPT 유입 식별 규칙</b><span>Organic referral/source + Ads UTM</span></div><span class="state">READY</span></div>
+          <div class="console-row"><span class="check event"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14"></path><path d="M5 12h10"></path><path d="M5 17h7"></path><circle cx="18" cy="12" r="1.7" fill="currentColor" stroke="none"></circle></svg></span><div><b>GPT 유입 이벤트 규칙</b><span>landing → view → cart → checkout</span></div><span class="state">READY</span></div>
+          <div class="console-row"><span class="check meta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8.5c0-1.4 1.1-2.5 2.5-2.5h5c1.4 0 2.5 1.1 2.5 2.5v7c0 1.4-1.1 2.5-2.5 2.5h-5C8.1 18 7 16.9 7 15.5v-7z"></path><path d="M10 11.5h4"></path><path d="M12 9.5v4"></path></svg></span><div><b>Meta Audience Rule</b><span>GPT visitors · exclude Purchase</span></div><span class="state">READY</span></div>
+          <div class="console-row"><span class="check window"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.8"></circle><path d="M12 8.2v4.1l2.9 1.6"></path></svg></span><div><b>Retargeting Window</b><span>30D / 14D / 7D / 7D</span></div><span class="state">READY</span></div>
+          <div class="console-row"><span class="check report"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17V9"></path><path d="M12 17V6"></path><path d="M17 17v-4"></path><path d="M5.5 18.5h13"></path></svg></span><div><b>통합 성과 템플릿</b><span>Direct + Recovered + Total ROAS</span></div><span class="state">READY</span></div>
+        </div>
+        <button class="console-launch" id="simulateBtn">전체 퍼널 자동 설계 시뮬레이션</button>
+        <div class="console-log mono" id="consoleLog">$ ready — 아직 실행하지 않았습니다.</div>
+      </div>
+      <div class="ops-copy reveal">
+        <h3>한 번 연결하면 GPT 유입부터 재공략까지 같은 흐름으로.</h3>
+        <p>브랜드 담당자가 여러 도구를 오가며 조건을 다시 만들지 않아도, GPT 유입 식별부터 미구매 고객 분류·구매자 제외·Meta 재공략까지 같은 기준으로 이어지도록 설계합니다.</p>
+        <div class="ops-list">
+          <div class="ops-item"><i>01</i><div><b>GPT 유입 자동 구분</b><span>오가닉·광고 유입을 같은 기준으로 정리해 신규 관심고객 규모를 바로 확인합니다.</span></div></div>
+          <div class="ops-item"><i>02</i><div><b>고관여 이탈 고객 자동 분류</b><span>상품조회·장바구니·결제진입 등 행동이 깊은 고객일수록 우선 공략 대상으로 분류합니다.</span></div></div>
+          <div class="ops-item"><i>03</i><div><b>이미 구매한 고객 자동 제외</b><span>구매 완료 고객에게 불필요한 광고가 반복되지 않도록 제외하고, 아직 고민 중인 고객에 집중합니다.</span></div></div>
+          <div class="ops-item"><i>04</i><div><b>직접 매출 + 회수 매출 한 번에</b><span>GPT에서 바로 산 고객과 Meta 재공략 후 구매한 고객의 매출을 함께 확인합니다.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:40px">
+  <div class="wrap">
+    <div class="eyebrow reveal">07 · AI OPERATIONS</div>
+    <h2 class="section-title reveal">다음 예산이 <span class="accent">더 많은 구매로 이어지도록.</span></h2>
+    <p class="section-lead reveal">어떤 고객군을 다시 잡아야 하는지, 어떤 메시지를 보여줘야 하는지, GPT와 Meta 예산을 어떻게 나눠야 하는지까지 구매 성과 기준으로 제안합니다.</p>
+    <div class="ai-stage">
+      <div class="ai-main reveal">
+        <span class="ai-label">AI OPERATING SIGNAL · #01</span>
+        <h3>Meta 회수 CPA가 더 낮습니다. 하지만 GPT 신규유입은 유지하세요.</h3>
+        <p>리타겟팅 효율만 보고 Meta에 예산을 과도하게 이동하면 향후 재공략 대상 자체가 줄어듭니다. 신규획득과 회수의 균형을 함께 판단합니다.</p>
+        <div class="ai-impact"><div class="impact"><small>현재 GPT 비중</small><b>62%</b><em>Acquire</em></div><div class="impact"><small>추천 GPT 비중</small><b>55%</b><em>-7%p</em></div><div class="impact"><small>예상 통합 ROAS</small><b>451%</b><em>+23%p</em></div></div>
+      </div>
+      <div class="ai-side reveal">
+        <div class="rec-card"><div class="rec-top"><small>Segment Recommendation</small><span class="score">HIGH IMPACT</span></div><b>결제이탈 7D를 가장 먼저 확대하세요.</b><p>대상 규모보다 구매 직전 행동을 우선해 재공략 효율을 높입니다.</p></div>
+        <div class="rec-card"><div class="rec-top"><small>Creative Recommendation</small><span class="score">TEST</span></div><b>할인보다 배송·후기 신뢰 소구를 먼저 테스트하세요.</b><p>장바구니 이후 이탈 구간에서 불확실성을 줄이는 메시지를 우선 권장합니다.</p></div>
+        <div class="rec-card"><div class="rec-top"><small>Landing Recommendation</small><span class="score">WATCH</span></div><b>GPT 유입과 일반 유입의 전환율 차이를 비교하세요.</b><p>Intent별 랜딩 메시지 정합성이 구매율에 영향을 주는지 확인합니다.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section security-section" id="security">
+  <div class="wrap">
+    <div class="eyebrow reveal">08 · CONNECTION & SECURITY</div>
+    <h2 class="section-title reveal">계정을 맡기는 방식이 아니라, <span class="accent">필요한 권한만 연결.</span></h2>
+    <div class="security-grid">
+      <div class="security-copy reveal">
+        <h3>실서비스 연결은 마지막 단계에서 검증합니다.</h3>
+        <p>제품 기능과 UI/UX를 먼저 완성하고, 최종 구현 후 GA4·Meta·ChatGPT Ads 연결을 한 번에 테스트하는 계획입니다. 실연동 시에는 비밀번호 저장이 아니라 Service Account, System User, API 권한 등 최소권한 구조를 사용합니다.</p>
+        <div class="security-points"><div><i>✓</i>개인 Google / Facebook 비밀번호 저장 안 함</div><div><i>✓</i>API Secret을 브라우저 LocalStorage에 저장 안 함</div><div><i>✓</i>읽기 / Audience / 캠페인 권한을 기능별 분리</div><div><i>✓</i>실데이터와 DEMO DATA 명확히 분리</div></div>
+      </div>
+      <div class="connector-stack reveal">
+        <div class="connector"><div class="connector-icon">GA4</div><div><b>Google Analytics 4</b><span>Service Account · Viewer · Data API</span></div><span class="perm ready">READ ONLY</span></div>
+        <div class="connector"><div class="connector-icon">M</div><div><b>Meta Marketing API</b><span>System User · Ad Account · Audience / Campaign permissions</span></div><span class="perm">MINIMUM PERMISSION</span></div>
+        <div class="connector"><div class="connector-icon">Px</div><div><b>Meta Pixel / CAPI</b><span>Browser + Server events · Purchase exclusion</span></div><span class="perm ready">EVENT</span></div>
+        <div class="connector"><div class="connector-icon">GPT</div><div><b>ChatGPT Ads</b><span>Campaign / UTM / Bulk or API-ready connector structure</span></div><span class="perm">FINAL TEST</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="eyebrow reveal">09 · BRAND VALUE</div>
+    <h2 class="section-title reveal">IntentBridge가 브랜드에 남기는 건, <span class="accent">더 많은 구매 기회입니다.</span></h2>
+    <div class="use-grid">
+      <div class="use-card reveal"><div class="role">01 · NEW CUSTOMER</div><h3>GPT에서 새로운 고객을 먼저 만납니다.</h3><p>추천·비교·구매 고민이 시작되는 순간 우리 브랜드를 발견한 고객을 신규 관심고객으로 확보합니다.</p><ul><li>GPT Organic + Ads 유입 확인</li><li>고관여 신규 고객 규모</li><li>직접 구매 성과</li><li>AI 채널 매출 기여도</li></ul></div>
+      <div class="use-card reveal"><div class="role">02 · RECOVERY</div><h3>바로 사지 않은 고객을 다시 만납니다.</h3><p>상품을 보고 떠난 고객, 장바구니에 담은 고객, 결제 직전 이탈 고객을 행동 단계별로 다시 공략합니다.</p><ul><li>미구매 고객 자동 분류</li><li>구매 완료 고객 제외</li><li>고관여 고객 우선 리타겟팅</li><li>Meta 추가 구매 확인</li></ul></div>
+      <div class="use-card reveal"><div class="role">03 · REVENUE</div><h3>어떤 채널이 실제 매출을 만들었는지 봅니다.</h3><p>GPT에서 바로 발생한 구매와 Meta가 다시 회수한 구매를 함께 봐야 신규 AI 유입의 진짜 가치를 알 수 있습니다.</p><ul><li>GPT 직접 매출</li><li>Meta 회수 매출</li><li>CPA / ROAS 비교</li><li>통합 매출 성과</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="section cross-section">
+  <div class="wrap">
+    <div class="eyebrow reveal">10 · NOT GPT-ONLY</div>
+    <h2 class="section-title reveal">시작은 GPT지만, 구조는 <span class="accent">어떤 매체에도 확장됩니다.</span></h2>
+    <div class="cross-hero reveal">
+      <div class="cross-kicker"><i></i> Cross-media growth architecture</div>
+      <h3>IntentBridge는 GPT 전용 툴이 아니라,<br>유입 매체와 재공략 매체를 유연하게 연결하는 구조입니다.</h3>
+      <p>핵심은 <b>어디서 들어왔는지 식별</b>하고, 자사몰에서 발생한 <b>행동 신호를 기준으로 미구매 고객을 분류</b>한 뒤, 다른 매체에서 다시 노출하는 것입니다. 지금은 GPT → Meta 흐름을 중심으로 설명하지만, 원리는 특정 매체 하나에만 묶이지 않습니다.</p>
+      <div class="cross-note"><span>✓</span><div><b>한 줄 요약</b><br>“GPT만 가능한 구조”가 아니라, <b>유입 매체 A에서 만든 관심고객을 매체 B에서 다시 공략</b>하는 퍼널로 확장할 수 있습니다.</div></div>
+    </div>
+
+    <div class="cross-grid">
+      <div class="cross-card reveal">
+        <div class="cross-top"><span class="cross-badge">GPT</span><span class="state">PRIMARY USE</span></div>
+        <small>Example 01</small>
+        <h4>ChatGPT Organic / Ads → Meta</h4>
+        <p>AI 검색·추천에서 시작된 관심고객을 Meta에서 다시 만나 구매까지 이어가는 가장 대표적인 구조입니다.</p>
+        <div class="cross-flow"><span class="cross-pill">GPT 유입</span><span class="cross-arrow">→</span><span class="cross-pill">자사몰 행동</span><span class="cross-arrow">→</span><span class="cross-pill">Meta 재공략</span></div>
+      </div>
+      <div class="cross-card reveal">
+        <div class="cross-top"><span class="cross-badge">NAVER</span><span class="state">EXPANDABLE</span></div>
+        <small>Example 02</small>
+        <h4>네이버 검색 / 쇼핑 → Meta</h4>
+        <p>네이버에서 상품을 보고 이탈한 고객을 Meta에서 다시 노출해 장바구니 복귀와 재방문을 유도하는 식으로 확장할 수 있습니다.</p>
+        <div class="cross-flow"><span class="cross-pill">네이버 유입</span><span class="cross-arrow">→</span><span class="cross-pill">미구매 분류</span><span class="cross-arrow">→</span><span class="cross-pill">Meta 전환</span></div>
+      </div>
+      <div class="cross-card reveal">
+        <div class="cross-top"><span class="cross-badge">GOOGLE</span><span class="state">EXPANDABLE</span></div>
+        <small>Example 03</small>
+        <h4>구글 검색 / 유튜브 → 다른 재공략 매체</h4>
+        <p>구글 검색, 유튜브, 디스플레이 등에서 먼저 유입된 고객을 이후 다른 퍼포먼스 매체에서 다시 회수하는 구조도 같은 원리로 설계할 수 있습니다.</p>
+        <div class="cross-flow"><span class="cross-pill">구글 유입</span><span class="cross-arrow">→</span><span class="cross-pill">행동 분석</span><span class="cross-arrow">→</span><span class="cross-pill">재공략 매체</span></div>
+      </div>
+      <div class="cross-card reveal">
+        <div class="cross-top"><span class="cross-badge">ETC</span><span class="state">FLEXIBLE</span></div>
+        <small>Example 04</small>
+        <h4>콘텐츠 / 인플루언서 / CRM 유입도 가능</h4>
+        <p>콘텐츠, 협찬, 이메일, CRM 등 다양한 진입점도 식별만 가능하다면 하나의 재공략 퍼널 안에서 이어서 관리할 수 있습니다.</p>
+        <div class="cross-flow"><span class="cross-pill">다양한 유입</span><span class="cross-arrow">→</span><span class="cross-pill">행동 기반 세그먼트</span><span class="cross-arrow">→</span><span class="cross-pill">재노출</span></div>
+      </div>
+    </div>
+
+    <div class="cross-bottom">
+      <div class="cross-summary reveal">
+        <h4>즉, IntentBridge의 본질은 “GPT 툴”이 아니라 “유입 → 행동 → 재공략”을 연결하는 성장 구조입니다.</h4>
+        <p>브랜드 관점에서 중요한 건 고객이 어떤 매체에서 들어왔는지, 그리고 아직 구매하지 않았는지입니다. 이 두 가지를 식별할 수 있다면 GPT뿐 아니라 여러 매체를 넘나드는 리타겟팅 구조로 확장할 수 있습니다.</p>
+      </div>
+      <div class="cross-cases reveal">
+        <h4>하나의 퍼널이 더 많은 구매 기회를 만듭니다.</h4>
+        <p>채널별 성과를 따로 보는 것을 넘어, 유입 이후의 행동과 재공략 결과까지 하나의 흐름으로 연결합니다.</p>
+        <div class="cross-case-list">
+          <div class="cross-case"><b>유입 채널 확장</b>GPT를 시작으로 검색·쇼핑·콘텐츠 등 다양한 신규 유입 채널을 연결할 수 있습니다.</div>
+          <div class="cross-case"><b>미구매 고객 회수</b>한 번 방문하고 떠난 고객도 행동 단계에 따라 다시 만나 구매 기회를 이어갑니다.</div>
+          <div class="cross-case"><b>크로스미디어 운영</b>유입 채널과 재공략 채널을 분리하지 않고 하나의 퍼널처럼 연결해 운영합니다.</div>
+          <div class="cross-case"><b>통합 성과 측정</b>직접 구매와 재공략을 통한 추가 구매까지 함께 보며 실제 매출 기여도를 확인합니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq" style="padding-top:30px">
+  <div class="wrap">
+    <div class="eyebrow reveal">11 · FAQ</div>
+    <h2 class="section-title reveal">IntentBridge, <span class="accent">이렇게 이해하면 됩니다.</span></h2>
+    <div class="faq-grid reveal">
+      <div class="faq-item open"><button class="faq-q"><span class="qno">01</span><b>GPT에서 질문한 내용이 Meta 광고에 그대로 넘어가나요?</b><span class="faq-plus">+</span></button><div class="faq-a"><p>아닙니다. GPT 대화 내용을 Meta에 전달하는 구조가 아닙니다. 고객이 GPT를 통해 자사몰로 들어온 이후, 자사몰에서 발생한 Meta Pixel/CAPI 이벤트를 기준으로 재공략합니다.</p></div></div>
+      <div class="faq-item"><button class="faq-q"><span class="qno">02</span><b>기존 Meta 리타겟팅과 무엇이 다른가요?</b><span class="faq-plus">+</span></button><div class="faq-a"><p>기존 리타겟팅이 전체 자사몰 방문자를 중심으로 했다면, IntentBridge는 GPT Organic·Ads 유입을 별도로 식별하고 그중 미구매 고객을 행동 단계별로 나눠 재공략한다는 점이 핵심입니다.</p></div></div>
+      <div class="faq-item"><button class="faq-q"><span class="qno">03</span><b>GPT 유입이 실제 구매로 이어졌는지도 볼 수 있나요?</b><span class="faq-plus">+</span></button><div class="faq-a"><p>네. GPT에서 유입된 고유 사용자, 상품조회, 장바구니, 직접 구매를 확인하고 이후 Meta 재공략을 통해 발생한 추가 구매·매출까지 함께 보는 구조입니다.</p></div></div>
+      <div class="faq-item"><button class="faq-q"><span class="qno">04</span><b>ChatGPT 광고뿐 아니라 오가닉 유입도 포함되나요?</b><span class="faq-plus">+</span></button><div class="faq-a"><p>네. 광고는 UTM을 기준으로, 오가닉은 식별 가능한 referral/source 신호를 기준으로 GPT 유입을 구분해 하나의 GPT Traffic 관점에서 비교하는 방향으로 설계합니다.</p></div></div>
+      <div class="faq-item"><button class="faq-q"><span class="qno">05</span><b>이미 구매한 고객에게도 계속 리타겟팅하나요?</b><span class="faq-plus">+</span></button><div class="faq-a"><p>아닙니다. Purchase 이벤트가 발생한 고객은 재공략 대상에서 제외하고, 아직 구매하지 않은 고객 중 행동 강도가 높은 고객부터 우선적으로 다시 공략하는 구조입니다.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="final-card reveal">
+      <div class="final-inner">
+        <div><h2>GPT에서 관심을 만들고, <span>놓친 구매는 Meta에서 다시 잡습니다.</span></h2><p>AI 채널에서 우리 브랜드를 발견한 고객을 새로운 트래픽으로 끝내지 않고, 재방문·추가 구매·최종 매출까지 연결합니다.</p></div>
+        <div class="final-action"><button class="btn btn-mint" data-modal>자동화 구조 미리보기</button><a class="btn btn-light" href="#top">처음부터 다시 보기 ↑</a></div>
+      </div>
+    </div>
+    <div class="footer"><span><b>IntentBridge</b> · GPT × Meta Growth Orchestration</span><span>Product concept showcase · Demo data only</span></div>
+  </div>
+</section>
+</main>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-head"><div><b>IntentBridge 자동 설계 미리보기</b><div style="font-size:10px;color:#83878d;margin-top:4px">실제 API 연결 전 제품 동작 구조를 설명하는 화면입니다.</div></div><button class="modal-close" id="modalClose">×</button></div>
+    <div class="modal-body">
+      <div class="setup-preview">
+        <div class="setup-row"><span class="setup-no">01</span><div><b>GPT Ads 캠페인 기준 설정</b><span>상품 URL · 캠페인명 · UTM 규칙</span></div><span class="setup-status">READY</span></div>
+        <div class="setup-row"><span class="setup-no">02</span><div><b>GA4 GPT 유입 분석 기준</b><span>Unique · Session · View · Cart · Purchase</span></div><span class="setup-status">READY</span></div>
+        <div class="setup-row"><span class="setup-no">03</span><div><b>Meta 이벤트 수집 구조</b><span>Pixel / CAPI · Browser + Server</span></div><span class="setup-status">READY</span></div>
+        <div class="setup-row"><span class="setup-no">04</span><div><b>미구매 Audience 자동 규칙</b><span>30D / 14D / 7D · Purchase 제외</span></div><span class="setup-status">READY</span></div>
+        <div class="setup-row"><span class="setup-no">05</span><div><b>통합 성과 리포트</b><span>GPT Direct + Meta Recovered + Total ROAS</span></div><span class="setup-status">READY</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">퍼널 설계 시뮬레이션이 완료되었습니다.</div>
+
+<script>
+// Reveal
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// nav active
+const navLinks=[...document.querySelectorAll('.navlinks a')];
+const sections=[...document.querySelectorAll('section[id]')];
+const sio=new IntersectionObserver(entries=>entries.forEach(en=>{if(en.isIntersecting){navLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+en.target.id));}}),{rootMargin:'-35% 0px -58% 0px'});
+sections.forEach(s=>sio.observe(s));
+
+// FAQ
+document.querySelectorAll('.faq-item').forEach(item=>{
+  item.querySelector('.faq-q').addEventListener('click',()=>{
+    const open=item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+    if(!open)item.classList.add('open');
+  });
+});
+
+// Segment interactions
+document.querySelectorAll('.segment').forEach(seg=>seg.addEventListener('click',()=>{
+  document.querySelectorAll('.segment').forEach(s=>s.classList.remove('active'));
+  seg.classList.add('active');
+}));
+
+// modal
+const modal=document.getElementById('modal');
+document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click',()=>modal.classList.add('show')));
+document.getElementById('modalClose').onclick=()=>modal.classList.remove('show');
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('show')});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')modal.classList.remove('show')});
+
+// simulation
+const sim=document.getElementById('simulateBtn');
+const log=document.getElementById('consoleLog');
+const toast=document.getElementById('toast');
+const steps=[
+  '[01/05] GPT UTM template generated',
+  '[02/05] GA4 measurement rules prepared',
+  '[03/05] Meta audience rules prepared',
+  '[04/05] Purchase exclusion rule applied',
+  '[05/05] Integrated attribution view generated',
+  '✓ Funnel blueprint ready — DEMO MODE'
+];
+sim.addEventListener('click',()=>{
+  sim.disabled=true;sim.textContent='설계 중...';log.textContent='';let i=0;
+  const timer=setInterval(()=>{
+    log.textContent += (i? '\n':'$ ') + steps[i];
+    i++;
+    if(i===steps.length){clearInterval(timer);sim.disabled=false;sim.textContent='전체 퍼널 자동 설계 시뮬레이션';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2300);}
+  },380);
+});
+
+
+// Performance Lab simulator
+const landingLift=document.getElementById('landingLift');
+const rtgBoost=document.getElementById('rtgBoost');
+const metaShare=document.getElementById('metaShare');
+const landingVal=document.getElementById('landingVal');
+const rtgVal=document.getElementById('rtgVal');
+const metaVal=document.getElementById('metaVal');
+const fmtKRW=n=>'₩'+Math.round(n).toLocaleString('ko-KR');
+const fmtM=n=>'₩'+(n/1000000).toFixed(1)+'M';
+function updateLab(){
+  if(!landingLift||!rtgBoost||!metaShare)return;
+  const l=+landingLift.value,r=+rtgBoost.value,m=+metaShare.value;
+  landingVal.textContent=l+'%';rtgVal.textContent=r+'%';metaVal.textContent=m+'%';
+  const basePurchase=94,baseRevenue=13696000,baseSpend=3200000,baseROAS=428;
+  const lift=Math.max(-.05,(l*.004)+(r*.005)+((m-38)*.003));
+  const purchase=Math.max(80,Math.round(basePurchase*(1+lift)));
+  const revenue=baseRevenue*(purchase/basePurchase);
+  const cpa=baseSpend/purchase;
+  const roas=(revenue/baseSpend)*100;
+  const pDelta=purchase-basePurchase;
+  const revPct=(revenue/baseRevenue-1)*100;
+  const cpaPct=(1-cpa/(baseSpend/basePurchase))*100;
+  const roasDelta=roas-baseROAS;
+  const rangeLow=Math.max(1,Math.round(purchase*.96)),rangeHigh=Math.round(purchase*1.04);
+  const roasLow=Math.round(roas*.96),roasHigh=Math.round(roas*1.04);
+  const confidence=Math.max(60,Math.min(84,68+Math.round((l+r)/8)));
+  document.getElementById('forecastPurchase').textContent=purchase+'건';
+  document.getElementById('purchaseDelta').textContent=(pDelta>=0?'▲ +':'▼ ')+pDelta+'건';
+  document.getElementById('forecastRevenue').textContent=fmtM(revenue);
+  document.getElementById('revenueDelta').textContent=(revPct>=0?'▲ +':'▼ ')+Math.abs(revPct).toFixed(1)+'%';
+  document.getElementById('forecastCPA').textContent=fmtKRW(cpa);
+  document.getElementById('cpaDelta').textContent=(cpaPct>=0?'▼ -':'▲ +')+Math.abs(cpaPct).toFixed(1)+'%';
+  document.getElementById('forecastROAS').textContent=Math.round(roas)+'%';
+  document.getElementById('roasDelta').textContent=(roasDelta>=0?'▲ +':'▼ ')+Math.abs(Math.round(roasDelta))+'%p';
+  document.getElementById('forecastRange').textContent=rangeLow+' ~ '+rangeHigh+'건 구매 · ROAS '+roasLow+' ~ '+roasHigh+'%';
+  document.getElementById('confidenceText').textContent='Forecast confidence '+confidence+'%';
+  document.getElementById('confidenceBar').style.width=confidence+'%';
+  document.getElementById('tablePurchase').textContent=purchase+'건';
+  document.getElementById('tableRevenue').textContent=fmtM(revenue);
+  document.getElementById('tableCPA').textContent=fmtKRW(cpa);
+  document.getElementById('tableROAS').textContent=Math.round(roas)+'%';
+  document.getElementById('growthScore').textContent=Math.max(65,Math.min(94,76+Math.round((l+r)/7)+Math.round((m-35)/5)));
+}
+[landingLift,rtgBoost,metaShare].forEach(el=>el&&el.addEventListener('input',updateLab));
+document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-preset]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const p=btn.dataset.preset;
+  const vals=p==='conservative'?[4,8,36]:p==='aggressive'?[15,25,50]:[8,15,42];
+  landingLift.value=vals[0];rtgBoost.value=vals[1];metaShare.value=vals[2];updateLab();
+}));
+const labRun=document.getElementById('labRun');
+if(labRun)labRun.addEventListener('click',()=>{updateLab();toast.textContent='성과개선 시뮬레이션을 다시 계산했습니다.';toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200);});
+updateLab();
+
+</script>
+</body>
+</html>

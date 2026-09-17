@@ -1,0 +1,4 @@
+import {PrismaClient} from "@prisma/client";
+const db=new PrismaClient({datasourceUrl:process.env.DATABASE_URL||"file:./dev.db"});
+async function main(){const email=process.env.INITIAL_ADMIN_EMAIL?.trim().toLowerCase();if(!email||!/^[-a-z0-9._+]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email))throw new Error("Set INITIAL_ADMIN_EMAIL to your email.");if(await db.user.count({where:{role:"ADMIN",status:"ACTIVE"}}))throw new Error("An active admin already exists. Use user management.");await db.user.create({data:{email,name:"관리자",role:"ADMIN",status:"ACTIVE"}});process.stdout.write("Initial admin created. Sign in through email verification.\n");}
+main().catch(e=>{process.stderr.write(e instanceof Error&&/INITIAL_ADMIN_EMAIL|active admin/.test(e.message)?e.message+"\n":"Admin setup failed.\n");process.exitCode=1}).finally(()=>db.$disconnect());

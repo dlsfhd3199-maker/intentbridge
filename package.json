@@ -1,0 +1,49 @@
+{
+  "name": "intentbridge",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --import ./tests/init-fixtures.ts --test tests/*.test.ts",
+    "test:ui": "playwright test",
+    "lint": "eslint .",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:admin": "tsx scripts/create-admin.ts",
+    "db:generate:pg": "prisma generate --schema prisma/postgresql/schema.prisma",
+    "db:migrate:pg": "prisma migrate deploy --schema prisma/postgresql/schema.prisma",
+    "db:dev": "prisma migrate dev",
+    "env:check": "tsx scripts/check-env.ts"
+  },
+  "dependencies": {
+    "@google-analytics/data": "^7.1.0",
+    "@prisma/client": "6.12.0",
+    "lucide-react": "^0.468.0",
+    "next": "^16.0.0",
+    "next-auth": "5.0.0-beta.32",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.70.0",
+    "@typescript-eslint/parser": "^8.70.0",
+    "eslint": "^10.10.0",
+    "prisma": "6.12.0",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

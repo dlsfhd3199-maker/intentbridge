@@ -1,0 +1,49 @@
+{
+  "advertisers": [
+    {
+      "id": "brand-a",
+      "name": "브랜드 A",
+      "industry": "생활용품",
+      "productName": "퓨어 베이비 세제",
+      "source": {
+        "uniqueUsers": 1284,
+        "sessions": 1516,
+        "organicUsers": 726,
+        "paidUsers": 558
+      },
+      "funnel": {
+        "viewContent": 1082,
+        "addToCart": 326,
+        "beginCheckout": 174,
+        "directPurchases": 41,
+        "retargetableAudience": 742,
+        "recoveredPurchases": 53
+      },
+      "finance": {
+        "gptSpend": 2050000,
+        "metaSpend": 1150000,
+        "directRevenue": 5970000,
+        "recoveredRevenue": 7720000
+      },
+      "segments": [
+        {"id":"checkout-7d","name":"결제 이탈 7D","volume":132,"priority":"high"},
+        {"id":"cart-14d","name":"장바구니 이탈 14D","volume":198,"priority":"medium"},
+        {"id":"view-30d","name":"상품조회 이탈 30D","volume":412,"priority":"broad"}
+      ]
+    },
+    {
+      "id": "brand-b",
+      "name": "브랜드 B",
+      "industry": "뷰티",
+      "productName": "데일리 케어 세럼",
+      "source": {"uniqueUsers": 842,"sessions": 1018,"organicUsers": 504,"paidUsers": 338},
+      "funnel": {"viewContent": 721,"addToCart": 204,"beginCheckout": 116,"directPurchases": 29,"retargetableAudience": 511,"recoveredPurchases": 34},
+      "finance": {"gptSpend": 1350000,"metaSpend": 780000,"directRevenue": 4350000,"recoveredRevenue": 5100000},
+      "segments": [
+        {"id":"checkout-7d","name":"결제 이탈 7D","volume":84,"priority":"high"},
+        {"id":"cart-14d","name":"장바구니 이탈 14D","volume":151,"priority":"medium"},
+        {"id":"view-30d","name":"상품조회 이탈 30D","volume":276,"priority":"broad"}
+      ]
+    }
+  ]
+}

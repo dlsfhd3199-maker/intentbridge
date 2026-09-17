@@ -1,0 +1,99 @@
+"use client";
+import {atomicStoreChange} from "@/lib/server-storage";
+import {useUserRole} from "@/context/user-role-context";
+import {can} from "@/lib/permissions";
+import {AdvertiserDashboard} from "@/features/dashboard/advertiser-dashboard";
+import { DraftLibrary, VersionHistory, ExportButtons } from "@/features/operations/libraries";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { advertisers } from "@/lib/dashboard";
+import { useDashboard, useWorkspaceSelection } from "@/components/app-shell";
+import { loadCampaignWorkspace, newCampaignDraft, evaluateCampaign, selectCampaignSegment, performanceHandoff } from "@/lib/campaign-service";
+import { readCampaignStore, persistCampaignDraft, saveCampaign, changeCampaignStatus, readCampaignHandoff } from "@/lib/campaign-store";
+import { savedCampaignSimulations } from "@/lib/campaign-simulations";
+import { changeCampaignBudget } from "@/lib/campaign-forecast";
+import { campaignName } from "@/lib/campaign-naming";
+import { recommendCampaignMessage } from "@/lib/campaign-message";
+import { campaignChannels, campaignObjectives, frequencyOptions } from "@/data/mock/campaign-config";
+import type { Campaign, CampaignDraft, CampaignForecast, CampaignOrigin, CampaignWorkspace, SavedCampaignSimulation } from "@/types/campaign";
+import type { Period } from "@/types/domain";
+import { number, won } from "@/lib/format";
+import "./campaigns.css";
+
+function AdminCampaignStudio() {
+  const dashboard = useDashboard(), select = useWorkspaceSelection(), params = useSearchParams();
+  const pendingDraft = useRef<CampaignDraft | null>(null);
+  const booted = useRef(false), incoming = useRef<ReturnType<typeof readCampaignHandoff>>(null);
+  const [context, setContext] = useState<CampaignWorkspace | null>(null), [initial, setInitial] = useState<CampaignDraft | null>(null), [error, setError] = useState("");
+  const advertiserId = dashboard.advertiser.id, period = dashboard.period;
+  useEffect(() => {
+    if (!booted.current) {
+      incoming.current = readCampaignHandoff(params.get("handoff") ?? "");
+      const id = incoming.current?.advertiserId ?? params.get("advertiser");
+      const days = Number(incoming.current?.period ?? params.get("period"));
+      if (id && params.get("draft")) pendingDraft.current = readCampaignStore(id).drafts.find(d => d.draftId === params.get("draft")) ?? null;
+      if (id && advertisers.some(a => a.id === id) && [7,14,30].includes(days) && (id !== advertiserId || days !== period)) { select(id, days as Period); return; }
+      booted.current = true;
+    }
+    let active = true;
+    setContext(null); setError("");
+    loadCampaignWorkspace({ advertiserId, period }).then(ctx => {
+      if (!active) return;
+      const handoff = incoming.current;
+      const saved = pendingDraft.current ?? readCampaignStore(advertiserId).draft;
+      pendingDraft.current = null;
+      setInitial(handoff ? { ...newCampaignDraft(ctx, handoff.origin, handoff.sourceIds), sourceChannelId: handoff.sourceChannelId, retargetingChannelId: handoff.retargetingChannelId } : saved?.period === period ? saved : newCampaignDraft(ctx));
+      incoming.current = null; setContext(ctx);
+      window.history.replaceState(null, "", `/campaigns?advertiser=${advertiserId}&period=${period}`);
+    }).catch(() => { if (active) setError("캠페인 데이터를 불러오지 못했습니다. 새로고침해 주세요."); });
+    return () => { active = false; };
+    // Selection is intentionally read only during URL bootstrap; subsequent shell changes own the workspace.
+  }, [advertiserId, period]);
+  if (error) return <p role="alert">{error}</p>;
+  if (!context || !initial || context.advertiser.id !== advertiserId || context.baseline.period !== period) return <p role="status">캠페인 관리 준비 중…</p>;
+  return <Editor key={`${advertiserId}:${period}`} context={context} initial={initial} onDraft={draft => { pendingDraft.current = draft; select(draft.advertiserId, draft.period); }} onSimulation={item => { if (!item.recommendation) return; const handoff = performanceHandoff(item.baseline, item.levers, item.recommendation); incoming.current = handoff; select(handoff.advertiserId, handoff.period); }}/>;
+}
+
+function Forecast({ value }: { value: CampaignForecast }) {
+  return <><span className="cs-tag">DEMO FORECAST</span><div className="cs-stats">{[
+    ["예상 도달", number(value.reach)], ["예상 클릭", number(value.clicks)], ["예상 구매", number(value.purchases)], ["예상 매출", won(value.revenue)], ["예상 CPA", value.cpa === null ? "산출 불가" : won(value.cpa)], ["예상 ROAS", value.roas === null ? "산출 불가" : `${number(value.roas)}%`],
+  ].map(([label, text]) => <div key={label}><span>{label}</span><strong>{text}</strong></div>)}</div><p>Mock 집행 가능 비용 {won(value.modeledSpend)} · 미집행 예상 {won(value.unspentBudget)}</p></>;
+}
+function Origin({ origin }: { origin: CampaignOrigin }) { return <div className="cs-origin"><b>Origin · {origin.from}</b>{origin.recommendation && <p>PRIORITY {origin.recommendation.priority} · {origin.recommendation.title}<br/>{origin.recommendation.message}</p>}{origin.scenario && <p>원본 시나리오: {origin.scenario} · 추천 재공략 예산 {origin.recommendedBudgetChange > 0 ? "+" : ""}{origin.recommendedBudgetChange}%</p>}{origin.forecast && <p>원본 성과 예측: 총 구매 {number(origin.forecast.totalPurchases)}건 · 매출 {won(origin.forecast.revenue)} (DEMO FORECAST)<br/>위 수치는 전체 퍼널 기준이며, 아래 개별 캠페인 예상 성과와 집계 범위가 다릅니다.</p>}</div>; }
+
+function Editor({ context: ctx, initial, onSimulation, onDraft }: { context: CampaignWorkspace; initial: CampaignDraft; onDraft: (draft: CampaignDraft) => void; onSimulation: (item: SavedCampaignSimulation) => void }) {
+  const [draft, setDraft] = useState(initial), [campaigns, setCampaigns] = useState(() => readCampaignStore(initial.advertiserId).campaigns);
+  const [saved, setSaved] = useState<SavedCampaignSimulation[]>([]), [filter, setFilter] = useState("ALL"), [detail, setDetail] = useState<Campaign | null>(null), [notice, setNotice] = useState(""), [storage, setStorage] = useState("memory");
+  const [draftRevision, setDraftRevision] = useState(0);
+  const evaluation = evaluateCampaign(draft, ctx);
+  useEffect(() => { setStorage(persistCampaignDraft(draft)); setDraftRevision(v => v + 1); }, [draft]);
+  useEffect(() => { let active = true; savedCampaignSimulations(ctx.advertiser.id).then(items => { if (active) setSaved(items); }); return () => { active = false; }; }, [ctx.advertiser.id]);
+  const update = (next: Partial<CampaignDraft>) => setDraft(current => ({ ...current, ...next, ...(campaigns.some(c => c.draftId === current.draftId && c.status !== "DRAFT") ? { draftId: crypto.randomUUID(), createdAt: new Date().toISOString() } : {}), updatedAt: new Date().toISOString() }));
+  const saving=useRef(false);const save = async(ready: boolean) => {if(saving.current)return;saving.current=true;try { const campaign = await atomicStoreChange(()=>saveCampaign(draft, evaluation, ctx.advertiser.name, ready)); setCampaigns(readCampaignStore(draft.advertiserId).campaigns); setDetail(current=>current?.draftId===campaign.draftId?campaign:current); setNotice(`${campaign.status} 저장 완료 · ${campaign.id}`); } catch (e) { setNotice((e as Error).message); }finally{saving.current=false;} };
+  const segment = ctx.funnel.segments.find(s => s.id === draft.segmentId)!;
+  return <div className="cs">
+    <div className="cs-intro"><div><span className="cs-tag">MOCK CAMPAIGN STUDIO</span><h2>다음 구매를 위한 캠페인</h2><p>고객 그룹 → Message → Budget → Review. 설정은 로그인한 워크스페이스에 서버 저장됩니다.</p></div><button onClick={() => { setDraft(newCampaignDraft(ctx)); setNotice("새 초안을 시작했습니다."); }}>새 초안</button></div>
+    <label className="cs-saved">저장된 성과 예측<select value="" onChange={e => { const item = saved.find(s => s.id === e.target.value); if (item?.recommendation) { if (item.baseline.period !== ctx.baseline.period) onSimulation(item); else { const h = performanceHandoff(item.baseline, item.levers, item.recommendation); setDraft(newCampaignDraft(ctx, h.origin, h.sourceIds)); setNotice("저장된 Simulation으로 새 초안을 만들었습니다."); } } }}><option value="">시나리오와 추천을 가져오세요</option>{saved.map(s => <option key={s.id} value={s.id} disabled={!s.recommendation}>{s.label} · 예상 구매 {s.forecast.totalPurchases}건</option>)}</select></label>
+    <Origin origin={draft.origin}/>
+    <nav className="cs-steps" aria-label="캠페인 생성 단계">{["Audience","Channel","Message","Budget","Forecast","Review"].map((s,i) => <a key={s} href={`#cs-${s.toLowerCase()}`}><small>STEP {i+1}</small>{s}</a>)}</nav>
+    <div className="cs-layout"><div className="cs-editor">
+      <section id="cs-audience"><h2><small>01</small> 고객 그룹</h2><label>세그먼트<select value={draft.segmentId} onChange={e => update(selectCampaignSegment(draft, ctx.funnel.segments.find(s => s.id === e.target.value)!, ctx))}>{ctx.funnel.segments.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label><p>세그먼트를 변경하면 Window·목표·추천 메시지도 갱신됩니다.</p><div className="cs-inline">{ctx.funnel.sources.map(s => <label key={s.id}><input type="checkbox" checked={draft.sourceIds.includes(s.id)} onChange={e => update({ sourceIds: e.target.checked ? [...draft.sourceIds,s.id] : draft.sourceIds.filter(id => id !== s.id) })}/>{s.name}</label>)}</div><div className="cs-fields"><label>고객 그룹 Window<select value={draft.window} onChange={e => update({ window: Number(e.target.value) as CampaignDraft["window"] })}>{[3,7,14,30].map(w => <option key={w} value={w}>{w}D</option>)}</select></label><label>Frequency Cap<select value={draft.frequency} onChange={e => update({ frequency: e.target.value as CampaignDraft["frequency"] })}>{frequencyOptions.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}</select></label></div><label className="cs-inline"><input type="checkbox" checked={draft.purchaseExcluded} onChange={e => update({ purchaseExcluded: e.target.checked })}/>Purchase 제외 {draft.purchaseExcluded ? "ON" : "OFF"}</label><div className="cs-audience"><span>{evaluation.behavior} · {evaluation.priority} PRIORITY</span><strong data-testid="campaign-audience">{number(evaluation.audience)}명</strong></div><p>분석 기간과 Window 중 짧은 기간을 적용합니다. Purchase 제외 OFF는 비교용이며 생성 전 ON이 필요합니다.</p></section>
+      <section id="cs-channel"><h2><small>02</small> Channel & Objective</h2><div className="cs-fields">{(["sourceChannelId","retargetingChannelId"] as const).map((field,i) => <label key={field}>{i ? "Retargeting Channel" : "Source Channel"}<select value={draft[field]} onChange={e => update({ [field]: e.target.value })}>{campaignChannels.filter(c => i ? c.retargeting : c.source).map(c => <option key={c.id} value={c.id}>{c.name} · {c.capability.status}</option>)}</select></label>)}</div><p>Source Channel → Site Behavior → 재방문 광고 Channel. GPT 전용 구조가 아닙니다.</p>{!evaluation.supported && <p className="cs-warning">Coming Soon · 현재 ChatGPT → Meta 조합만 Mock 예상 성과와 생성이 가능합니다.</p>}<label>Campaign Objective<select value={draft.objective} onChange={e => update({ objective: e.target.value as CampaignDraft["objective"] })}>{campaignObjectives.map(o => <option key={o}>{o}</option>)}</select></label>{["Lead","Custom"].includes(draft.objective) && <p className="cs-warning">Lead / Custom 측정은 Coming Soon입니다. 초안으로 저장할 수 있습니다.</p>}</section>
+      <section id="cs-message"><h2><small>03</small> Message</h2><button onClick={() => update({ message: recommendCampaignMessage(segment, ctx.funnel) })}>추천 메시지 다시 적용</button>{(["headline","body","cta"] as const).map(field => <label key={field}>{({ headline:"Headline",body:"Body",cta:"CTA" })[field]}{field === "body" ? <textarea rows={4} maxLength={1000} value={draft.message[field]} onChange={e => update({ message: { ...draft.message, [field]: e.target.value } })}/> : <input maxLength={field === "cta" ? 100 : 200} value={draft.message[field]} onChange={e => update({ message: { ...draft.message, [field]: e.target.value } })}/>}</label>)}<p>제품·행동·병목에 따른 Mock Rule 추천입니다. 외부 AI 호출은 없습니다.</p></section>
+      <section id="cs-budget"><h2><small>04</small> Budget & Schedule</h2><div className="cs-fields">{(["daily","total","duration"] as const).map(field => <label key={field}>{({daily:"일 예산 (원)",total:"총 예산 (원)",duration:"집행 기간 (일)"})[field]}<input type="number" min={0} max={field === "duration" ? 90 : field === "daily" ? 10000000 : 900000000} value={draft.budget[field]} onChange={e => update({ budget: changeCampaignBudget(draft.budget, field, Number(e.target.value)) })}/></label>)}</div><p>마지막 수정한 {draft.budget.mode === "daily" ? "일" : "총"} 예산을 기준으로 자동 계산합니다. 집행 기간은 1~90일입니다.</p></section>
+      <section id="cs-forecast"><h2><small>05</small> 예상 성과</h2><Forecast value={evaluation.forecast}/><details><summary>계산 가정 확인</summary><p>예상 노출 = min(예산 ÷ Mock CPM × 1,000, 고객 그룹 × 기간 내 빈도). 도달은 고객 그룹 이내, 클릭은 도달 이내, 구매는 클릭 이내로 제한합니다. 고객 그룹 포화 시 예산을 늘려도 예상 구매가 증가하지 않을 수 있습니다.</p><p>CTR {(evaluation.forecast.ctr*100).toFixed(1)}% · 클릭→구매 CVR {(evaluation.forecast.cvr*100).toFixed(1)}% · 평균 주문액 {won(evaluation.forecast.averageOrderValue)}. CPA = Mock 집행 비용 ÷ 구매, ROAS = 매출 ÷ Mock 집행 비용 × 100. 0 분모는 산출 불가입니다. 실제 성과를 보장하지 않습니다.</p></details></section>
+      <section id="cs-review"><h2><small>06</small> Review & Automation Preview</h2><label>Campaign Name<input maxLength={200} value={draft.name} onChange={e => update({ name: e.target.value })}/></label><button onClick={() => update({ name: campaignName(draft) })}>이름 자동 생성</button><p>{ctx.advertiser.name} · {draft.sourceChannelId} → {draft.retargetingChannelId} · {draft.objective}<br/>{evaluation.segmentName} · {number(evaluation.audience)}명 · {draft.window}D · {draft.frequency}<br/>Purchase 제외 {draft.purchaseExcluded ? "ON" : "OFF"} · 일 {won(draft.budget.daily)} / 총 {won(draft.budget.total)} · {draft.budget.duration}일</p><label>UTM Parameters<textarea readOnly value={evaluation.tracking.parameters} rows={3}/></label><button onClick={async () => { try { await navigator.clipboard.writeText(evaluation.tracking.parameters); setNotice("UTM 복사 완료"); } catch { setNotice("복사 권한이 없습니다. UTM 필드의 텍스트를 직접 복사하세요."); } }}>UTM 복사</button><p>원본 유입 캠페인: {evaluation.tracking.sourceCampaignId}<br/>유입 소스: {evaluation.tracking.sourceIds.join(" / ")} · UTM source는 재공략 매체입니다.</p><div className="cs-review-message"><b>{draft.message.headline}</b><p>{draft.message.body}</p><p>CTA: {draft.message.cta}</p><p>DEMO FORECAST · 구매 {number(evaluation.forecast.purchases)}건 · CPA {evaluation.forecast.cpa === null ? "산출 불가" : won(evaluation.forecast.cpa)} · ROAS {evaluation.forecast.roas === null ? "산출 불가" : `${number(evaluation.forecast.roas)}%`}</p></div><b>{evaluation.ready ? "Campaign Ready · MOCK" : "설정 확인 필요"}</b><ul className="cs-checks">{evaluation.checks.map(c => <li key={c.label} className={c.ready ? "ready" : "pending"}><b>{c.ready ? "✓" : "!"} {c.label}</b><span>{c.ready ? "READY · Mock" : c.reason}</span></li>)}</ul><p>Mock 생성 시 READY로 저장됩니다. 이미 생성한 캠페인을 수정하면 새 초안으로 분리됩니다.</p><div className="cs-actions"><button onClick={() => save(false)}>초안 저장</button><button className="cs-primary" disabled={!evaluation.ready} onClick={() => save(true)}>Mock 캠페인 생성</button></div></section>
+    </div><aside className="cs-preview"><span className="cs-tag">{campaignChannels.find(c => c.id === draft.retargetingChannelId)?.previewLabel}</span><div className="cs-feed"><b>{ctx.advertiser.name}</b><small>Sponsored · MOCK PREVIEW</small><p>{draft.message.body}</p><div className="cs-product"><span>INTENT / BRIDGE</span><strong>{ctx.advertiser.productName}</strong><small>PRODUCT PLACEHOLDER</small></div><div className="cs-feed-bottom"><h3>{draft.message.headline}</h3><span>{draft.message.cta}</span></div></div><p>로컬 Placeholder · 메시지 편집이 즉시 반영됩니다.</p></aside></div>
+    <div className="cs-notice" role="status">{notice || "초안 자동 저장 중"}<small>{storage === "local" ? "광고주별 서버 자동 저장 · 하단 상태 확인" : "저장소 사용 불가 · 현재 세션 메모리 저장"}</small></div>
+    <DraftLibrary advertiserId={draft.advertiserId} revision={`${draftRevision}:${campaigns.length}`} onOpen={d => { if (d.period === ctx.baseline.period) setDraft(d); else onDraft(d); }} onDelete={id => { if (draft.draftId === id) setDraft(readCampaignStore(draft.advertiserId).drafts[0] ?? newCampaignDraft(ctx)); setCampaigns(readCampaignStore(draft.advertiserId).campaigns); }}/>
+    <section className="cs-list"><div className="cs-list-heading"><h2>Campaigns <small>{campaigns.length}</small></h2><label>상태 필터<select value={filter} onChange={e => setFilter(e.target.value)}>{["ALL","DRAFT","READY","MOCK ACTIVE","PAUSED"].map(s => <option key={s}>{s}</option>)}</select></label></div><div className="cs-table" tabIndex={0}><table><thead><tr><th>Campaign / Advertiser</th><th>Source → Channel</th><th>고객 그룹</th><th>Budget</th><th>Status</th><th>예상 성과 ROAS</th><th>Created At</th><th>Origin</th></tr></thead><tbody>{campaigns.filter(c => filter === "ALL" || c.status === filter).map(c => <tr key={c.id}><td><button onClick={() => setDetail(c)}>{c.name || "이름 없는 초안"}</button><small>{c.advertiserName} · {c.id}</small></td><td>{c.sourceChannelId} → {c.retargetingChannelId}</td><td>{c.audienceName}<br/>{number(c.audienceSize)}명</td><td>{won(c.budget.total)}</td><td>{c.status}</td><td>{c.forecast.roas === null ? "—" : `${number(c.forecast.roas)}%`}<small>DEMO FORECAST</small></td><td>{c.createdAt.slice(0,10)}</td><td>{c.origin.from}</td></tr>)}</tbody></table></div>{!campaigns.some(c => filter === "ALL" || c.status === filter) && <p>저장된 캠페인이 없습니다.</p>}<p>최근 편집: {draft.updatedAt.replace("T"," ").slice(0,19)} UTC · 실제 광고 전송·집행은 없습니다.</p></section>
+    {detail && <CampaignDetail campaign={detail} onClose={() => setDetail(null)} onStatus={async() => {if(saving.current)return;saving.current=true;try{const next = await atomicStoreChange(()=>changeCampaignStatus(draft.advertiserId, detail.id, detail.status === "MOCK ACTIVE" ? "PAUSED" : "MOCK ACTIVE")); setDetail(current=>current?.id===next.id?next:current); setCampaigns(readCampaignStore(draft.advertiserId).campaigns);}catch(e){setNotice((e as Error).message);}finally{saving.current=false;} }}/>} 
+  </div>;
+}
+function CampaignDetail({ campaign: c, onClose, onStatus }: { campaign: Campaign; onClose: () => void; onStatus: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => { const previous = document.activeElement; ref.current?.showModal(); return () => { if (previous instanceof HTMLElement) previous.focus(); }; }, []);
+  return <dialog aria-labelledby="campaign-detail-title" className="cs-dialog cs" ref={ref} onCancel={onClose}><button className="cs-close" onClick={onClose}>닫기</button><h2 id="campaign-detail-title">{c.name || "이름 없는 초안"}</h2><p>{c.id} · {c.status}</p><Origin origin={c.origin}/><p>{c.advertiserName} · {c.sourceChannelId} → {c.retargetingChannelId} · {c.objective}<br/>{c.audienceName} · {c.audienceSize}명 · {c.window}D · {c.frequency}<br/>Purchase 제외 {c.purchaseExcluded ? "ON" : "OFF"} · 총 {won(c.budget.total)} / 일 {won(c.budget.daily)} · {c.budget.duration}일</p><h3>{c.message.headline}</h3><p>{c.message.body}</p><p>CTA: {c.message.cta}</p><Forecast value={c.forecast}/><ExportButtons campaign={c}/><VersionHistory campaign={c}/><p className="cs-utm">{c.tracking.parameters}</p><p>원본 캠페인: {c.tracking.sourceCampaignId} · 유입 {c.tracking.sourceIds.join(" / ")}</p>{c.status !== "DRAFT" && <button onClick={onStatus}>{c.status === "MOCK ACTIVE" ? "Mock 일시중지" : "Mock 활성화"}</button>}<p>상태 변경은 로컬 시뮬레이션이며 실제 집행하지 않습니다.</p></dialog>;
+}
+
+export function CampaignStudio(){const {user}=useUserRole();return can(user.role,"MANAGE_CAMPAIGN")?<AdminCampaignStudio/>:<AdvertiserDashboard view="campaigns"/>;}

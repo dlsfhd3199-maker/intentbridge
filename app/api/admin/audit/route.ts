@@ -1,0 +1,2 @@
+import {pagination} from "@/lib/server/input";
+import {db} from '@/lib/server/database';import {apiError,requirePermission} from '@/lib/server/authorization';export async function GET(request:Request){try{await requirePermission('MANAGE_SETTINGS');return Response.json(await db.auditLog.findMany({...pagination(request.url),orderBy:{id:'desc'}}),{headers:{'Cache-Control':'no-store'}})}catch(e){return apiError(e)}}

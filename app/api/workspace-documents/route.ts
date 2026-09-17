@@ -1,0 +1,4 @@
+import {requireUser,requireAdvertiserAccess,requirePermission,apiError,AccessError} from "@/lib/server/authorization";
+import {db} from "@/lib/server/database";
+import {withRequest} from "@/lib/server/request-context";
+export async function GET(r:Request){return withRequest(r,async()=>{try{await requireUser();const p=new URL(r.url).searchParams,id=p.get("advertiser");let ids:string[];if(id){await requireAdvertiserAccess(id);ids=[id]}else{await requirePermission("MANAGE_SETTINGS");const rows=await db.advertiser.findMany({where:{status:"ACTIVE"},select:{id:true},take:101});if(rows.length>100)throw new AccessError(413,"Workspace를 나누어 백업해 주세요.");ids=rows.map(a=>a.id)}const documents=await db.workspaceDocument.findMany({where:{advertiserId:{in:ids}},select:{key:true,payload:true,revision:true},take:1001});if(documents.length>1000)throw new AccessError(413,"조회 범위를 나누어 주세요.");return Response.json(documents);}catch(e){return apiError(e)}})}

@@ -1,0 +1,7 @@
+import type { FunnelEventMapping } from "../../types/ga4";
+import type { Period,SourceId } from "../../types/domain";
+export const defaultFunnelEvents:FunnelEventMapping={viewContent:"view_item",addToCart:"add_to_cart",beginCheckout:"begin_checkout",purchase:"purchase"};
+export const defaultSourceRules={aliases:["chatgpt","chatgpt.com","chat.openai.com","openai"],paidMediums:["paid","cpc","paid_ai","paid_search"],organicMediums:["referral","organic"]};
+export type SourceRules=typeof defaultSourceRules;
+export function dateRange(period:Period){if(![7,14,30].includes(period))throw new Error("Invalid period");return {startDate:`${period}daysAgo`,endDate:"yesterday" as const};}
+export function classifySource(source:string,medium:string,rules:SourceRules=defaultSourceRules){const s=source.trim().toLowerCase(),m=medium.trim().toLowerCase();if(rules.aliases.includes(s)){if(rules.paidMediums.includes(m))return {channelId:"gpt-ads" as SourceId,classification:"GPT Paid" as const};if(rules.organicMediums.includes(m))return {channelId:"gpt-organic" as SourceId,classification:"GPT Organic" as const};return {channelId:"other" as SourceId,classification:"GPT Unclassified" as const};}const channelId:SourceId=/^(www\.)?(google|google\.com)$/.test(s)?"google":/^(www\.)?(naver|naver\.com)$/.test(s)?"naver":/^(facebook|instagram|fb|ig|.*\.facebook\.com|.*\.instagram\.com|facebook\.com|instagram\.com)$/.test(s)?"meta":"other";return {channelId,classification:"Other" as const};}

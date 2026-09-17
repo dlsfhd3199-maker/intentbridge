@@ -1,0 +1,4 @@
+import {listUsers,changeUser} from '@/lib/server/admin-repository';import {apiError,sameOrigin} from '@/lib/server/authorization';import {jsonInput} from '@/lib/server/input';import {withRequest} from '@/lib/server/request-context';
+export async function GET(r:Request){return withRequest(r,async()=>{try{return Response.json(await listUsers(r.url))}catch(e){return apiError(e)}})}
+async function write(r:Request,create:boolean){return withRequest(r,async()=>{try{sameOrigin(r);return Response.json(await changeUser(await jsonInput(r,20000),create))}catch(e){return apiError(e)}})}
+export async function POST(r:Request){return write(r,true)}export async function PATCH(r:Request){return write(r,false)}

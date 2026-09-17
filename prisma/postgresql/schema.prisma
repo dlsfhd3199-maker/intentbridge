@@ -1,0 +1,197 @@
+generator client {
+ provider = "prisma-client-js"
+}
+datasource db {
+ provider = "postgresql"
+ url = env("DATABASE_URL")
+}
+model User {
+ id String @id @default(cuid())
+ email String @unique
+ name String?
+ emailVerified DateTime?
+ image String?
+ role String @default("ADVERTISER")
+ status String @default("INVITED")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([status,role])
+ lastLoginAt DateTime?
+ members AdvertiserMember[]
+ sessions Session[]
+ settings UserSetting[]
+ invitations Invitation[]
+}
+model Session {
+ id String @id @default(cuid())
+ @@index([userId])
+ @@index([expires])
+ sessionToken String @unique
+ userId String
+ expires DateTime
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model VerificationToken {
+ identifier String
+ token String @unique
+ expires DateTime
+ @@unique([identifier,token])
+}
+model Invitation {
+ id String @id @default(cuid())
+ userId String
+ @@index([userId,expiresAt])
+ tokenHash String @unique
+ expiresAt DateTime
+ acceptedAt DateTime?
+ createdAt DateTime @default(now())
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model Advertiser {
+ id String @id @default(cuid())
+ name String
+ industry String @default("")
+ productName String @default("")
+ status String @default("ACTIVE")
+ mockData Json
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ members AdvertiserMember[]
+ documents WorkspaceDocument[]
+ connections AdvertiserConnection[]
+ campaigns Campaign[]
+ versions CampaignVersion[]
+ drafts CampaignDraft[]
+ simulations SavedSimulation[]
+ rules AutomationRule[]
+ history OperationHistory[]
+ alerts Alert[]
+}
+model AdvertiserMember {
+ userId String
+ advertiserId String
+ role String @default("ADVERTISER")
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([userId,advertiserId])
+ @@index([advertiserId])
+}
+model WorkspaceDocument {
+ advertiserId String
+ key String
+ payload Json
+ revision Int @default(0)
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,key])
+}
+model UserSetting {
+ userId String
+ key String
+ payload Json
+ revision Int @default(0)
+ user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ @@id([userId,key])
+}
+model AdvertiserConnection {
+ id String @id @default(cuid())
+ advertiserId String
+ provider String
+ propertyId String?
+ status String @default("NOT CONFIGURED")
+ dataMode String @default("mock")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@unique([advertiserId,provider])
+}
+model AuditLog {
+ id String @id @default(cuid())
+ requestId String?
+ actorUserId String
+ advertiserId String?
+ action String
+ resource String
+ before Json?
+ after Json?
+ createdAt DateTime @default(now())
+ @@index([advertiserId,createdAt])
+ @@index([createdAt,id])
+}
+
+model Campaign {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model CampaignVersion {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model CampaignDraft {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model SavedSimulation {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model AutomationRule {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model OperationHistory {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model Alert {
+ id String
+ advertiserId String
+ payload Json
+ updatedAt DateTime @updatedAt
+ advertiser Advertiser @relation(fields:[advertiserId],references:[id],onDelete:Cascade)
+ @@id([advertiserId,id])
+}
+
+model MutationReceipt {
+ id String @id
+ payloadHash String
+ result Json
+ expiresAt DateTime
+ @@index([expiresAt])
+}
+model RateLimitBucket {
+ id String @id
+ count Int
+ expiresAt DateTime
+ @@index([expiresAt])
+}

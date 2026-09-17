@@ -1,0 +1,14 @@
+"use client";
+import {useEffect,useState} from "react";
+import {AdvertiserManagement,UserManagement} from "@/features/admin/management";
+import {signOut} from "next-auth/react";
+import {SessionMonitor} from "./session-monitor";
+import {AppShell} from "./app-shell";
+import {installFixtures,advertisers} from "@/data/mock/repository";
+import {installSessionUser} from "@/lib/permissions";
+import {installServerStorage,storageStatus,subscribeStorage,retryServerStorage,unsavedServerData} from "@/lib/server-storage";
+import {getDashboard} from "@/lib/dashboard";
+import {downloadText} from "@/lib/download";
+import type {DashboardData} from "@/types/domain";
+function SaveStatus(){const [state,setState]=useState(storageStatus());useEffect(()=>subscribeStorage(()=>setState(storageStatus())),[]);useEffect(()=>{const handler=(event:BeforeUnloadEvent)=>{if(storageStatus().pending||storageStatus().error){event.preventDefault();event.returnValue="";}};window.addEventListener("beforeunload",handler);return()=>window.removeEventListener("beforeunload",handler);},[]);return <div className="server-save-status" data-pending={state.pending} role="status">{state.error?<><b>{state.error}</b><button onClick={retryServerStorage}>저장 다시 시도</button><button onClick={()=>downloadText("unsaved-workspace.json",JSON.stringify(unsavedServerData(),null,2),"application/json")}>미저장 초안 보관</button><a href="/login" target="_blank" rel="noopener noreferrer">새 창에서 로그인</a></>:state.pending?"서버에 저장 중…":"서버 저장 완료"}</div>;}
+export function WorkspaceBootstrap({children}:{children:React.ReactNode}){const [data,setData]=useState<DashboardData|null>(null),[error,setError]=useState(""),[setup,setSetup]=useState(false);useEffect(()=>{let active=true;(async()=>{const response=await fetch("/api/bootstrap",{cache:"no-store"});if(response.status===401){window.location.assign("/login");return;}if(!response.ok)throw new Error("워크스페이스를 불러오지 못했습니다.");const result=await response.json();if(!active)return;installSessionUser(result.user);installFixtures(result.fixtures);installServerStorage(result.documents);const id=result.user.role==="admin"?advertisers[0]?.id:result.user.advertiserId;if(!id&&result.user.role==="admin"){setSetup(true);return;}if(!id){setError("할당된 워크스페이스가 없습니다. 관리자에게 연결을 요청해 주세요.");return;}const first=await getDashboard({advertiserId:id,period:30});if(active)setData(first);})().catch(()=>{if(active)setError("워크스페이스를 불러오지 못했습니다. 관리자에게 문의해 주세요.");});return()=>{active=false};},[]);return setup?<main className="mvp"><h1>첫 Workspace를 만들어 주세요.</h1><AdvertiserManagement/><UserManagement/><button onClick={()=>signOut({redirectTo:"/login"})}>로그아웃</button></main>:error?<section className="access-denied"><h1>{error}</h1><a href="/login">로그인 화면으로</a></section>:data?<><AppShell advertisers={advertisers} initialData={data}>{children}</AppShell><SaveStatus/><SessionMonitor/></>:<main className="auth-loading" role="status">사용자와 워크스페이스를 확인하고 있습니다…</main>;}
