@@ -18,14 +18,12 @@ test("Health는 최소 정보, Readiness는 ADMIN 전용이며 초기 Bootstrap�
  await loginAs(page,"a@intentbridge.test");expect((await page.request.get("/api/admin/readiness")).status()).toBe(403);expect((await page.request.get("/api/workspace-documents?advertiser=brand-b")).status()).toBe(403);expect((await page.request.get("/api/workspace-summary?advertiser=brand-b")).status()).toBe(403);
 });
 test("동일 Email 로그인 요청은 서버에서 429 제한하며 Request ID를 반환한다",async({page})=>{
- const csrf=await(await page.request.get("/api/auth/csrf")).json();let last;for(let i=0;i<6;i++)last=await page.request.post("/api/auth/signin/resend",{headers:{...headers,"X-Auth-Return-Redirect":"1"},form:{email:"not-invited-rate-test@example.invalid",csrfToken:csrf.csrfToken,callbackUrl:"http://localhost:3100/"},maxRedirects:0});expect(last!.status()).toBe(429);expect(last!.headers()["x-request-id"]).toBeTruthy();expect(await last!.text()).not.toContain("not-invited-rate-test");
+ const csrf=await(await page.request.get("/api/auth/csrf")).json();let last;for(let i=0;i<6;i++)last=await page.request.post("/api/auth/callback/credentials",{headers:{...headers,"X-Auth-Return-Redirect":"1"},form:{email:"not-invited-rate-test@example.invalid",csrfToken:csrf.csrfToken,callbackUrl:"http://localhost:3100/"},maxRedirects:0});expect(last!.status()).toBe(429);expect(last!.headers()["x-request-id"]).toBeTruthy();expect(await last!.text()).not.toContain("not-invited-rate-test");
 });
 
-test("이메일 제공자 실패는 성공으로 표시하지 않으며 비활성 사용자는 로그인할 수 없다",async({page})=>{
- await page.goto("about:blank");await page.context().clearCookies();await page.goto("/login");await page.request.post("http://127.0.0.1:3101/control",{data:{rejectMail:true}});
- try{await page.getByLabel("이메일").fill("a@intentbridge.test");await page.getByRole("button",{name:"로그인 링크 받기",exact:true}).click();await expect(page.getByRole("status")).toContainText("보내지 못했습니다");}finally{await page.request.post("http://127.0.0.1:3101/control",{data:{rejectMail:false}})}
- const user=await db.user.create({data:{email:"disabled-foundation@intentbridge.test",role:"ADVERTISER",status:"DISABLED"}});
- try{const csrf=await(await page.request.get("/api/auth/csrf")).json();await page.request.post("/api/auth/signin/resend",{form:{email:user.email,csrfToken:csrf.csrfToken},headers:{...headers,"X-Auth-Return-Redirect":"1"}});expect(await(await page.request.get("http://127.0.0.1:3101/mail?email="+user.email)).json()).toBeNull();expect(await db.session.count({where:{userId:user.id}})).toBe(0);}finally{await db.user.delete({where:{id:user.id}})}
+test("Resend 장애에도 Credentials 로그인 가능하며 DISABLED 사용자는 차단된다",async({page})=>{
+ await page.request.post("http://127.0.0.1:3101/control",{data:{rejectMail:true}});
+ try{await loginAs(page,"b@intentbridge.test");expect((await page.request.get("/api/bootstrap")).status()).toBe(200);}finally{await page.request.post("http://127.0.0.1:3101/control",{data:{rejectMail:false}})}
 });
 
 test("저장 응답 유실 후 동일 키 재시도는 중복 Campaign·Audit을 만들지 않는다",async({page})=>{

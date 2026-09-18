@@ -1,3 +1,5 @@
+> **현재 인증 안내:** 이메일·비밀번호 회원가입과 관리자 승인 방식으로 전환했습니다. 아래 과거 Magic Link/필수 Resend/DB Session 안내보다 [AUTH_CREDENTIALS_MIGRATION.md](AUTH_CREDENTIALS_MIGRATION.md)가 우선합니다. 기존 계정은 비밀번호 초기 설정과 재로그인이 필요합니다.
+
 # 현재 실행 안내
 
 현재 인증·서버 DB 기반 앱입니다. 아래 과거 단계별 기록의 Mock Role/미구현 설명보다 [DEPLOYMENT.md](DEPLOYMENT.md)와 [AUTH_ARCHITECTURE.md](AUTH_ARCHITECTURE.md)가 우선합니다. 개발은 `APP_ENV=development`, SQLite 설정 후 `npm run db:generate`, `npm run db:migrate`, `npm run db:seed`, `npm run dev` 순서입니다. Staging/Production은 별도 PostgreSQL migration을 사용합니다.

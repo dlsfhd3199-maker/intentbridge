@@ -1,44 +1,56 @@
-import {readEnvironment} from "./lib/server/env";
-import {sendLoginEmail} from "./lib/server/email";
-import {authTrace,authFailure,authOperation} from "./lib/server/auth-trace";
-import {emailLoginDecision,emailLoginAllowed} from "./lib/auth-diagnostics";
-import {requestContext} from "./lib/server/request-context";
-import NextAuth from "next-auth";
-import Resend from "next-auth/providers/resend";
-import type {Adapter,AdapterUser} from "next-auth/adapters";
+import NextAuth,{CredentialsSignin} from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import {createHash,randomBytes} from "node:crypto";
 import {db} from "./lib/server/database";
-const hash=(token:string)=>createHash("sha256").update(token).digest("hex");
-const asUser=(u:{id:string;email:string;name:string|null;emailVerified:Date|null;image:string|null}):AdapterUser=>({id:u.id,email:u.email,name:u.name,emailVerified:u.emailVerified,image:u.image});
-const adapter:Adapter={
- async createUser(){throw new Error("Invitation required");},
- async getUser(id){const u=await db.user.findUnique({where:{id}});return u?asUser(u):null;},
- async getUserByEmail(email){const u=await authOperation("user.lookup",()=>db.user.findUnique({where:{email:email.toLowerCase()}}));return u?asUser(u):null;},
- async getUserByAccount(){return null;},
- async updateUser(user){return asUser(await db.user.update({where:{id:user.id},data:{...(user.emailVerified?{emailVerified:user.emailVerified}:{})}}));},
- async createSession(s){await authOperation("session.create",()=>db.session.create({data:{...s,sessionToken:hash(s.sessionToken)}}));return s;},
- async getSessionAndUser(token){const row=await db.session.findUnique({where:{sessionToken:hash(token)},include:{user:true}});if(!row||row.user.status!=="ACTIVE")return null;return {session:{sessionToken:token,userId:row.userId,expires:row.expires},user:asUser(row.user)};},
- async updateSession(s){const row=await db.session.update({where:{sessionToken:hash(s.sessionToken)},data:{expires:s.expires}});return {...row,sessionToken:s.sessionToken};},
- async deleteSession(token){await db.session.deleteMany({where:{sessionToken:hash(token)}});},
- // Auth.js already hashes email verification tokens before calling the adapter.
- async createVerificationToken(token){return authOperation("token.create",()=>db.verificationToken.create({data:token}));},
- async useVerificationToken({identifier,token}){return authOperation("token.consume",()=>db.$transaction(async tx=>{const row=await tx.verificationToken.findUnique({where:{identifier_token:{identifier,token}}});if(!row)return null;const deleted=await tx.verificationToken.deleteMany({where:{identifier,token}});return deleted.count?row:null;}));},
-};
+import {readEnvironment} from "./lib/server/env";
+import {authFailure,authTrace} from "./lib/server/auth-trace";
+import {requestContext} from "./lib/server/request-context";
+import {normalizeEmail,validEmail,verifyPassword} from "./lib/password";
+import {transaction} from "./lib/server/transaction";
+class PendingUser extends CredentialsSignin {code="pending";}
+class DisabledUser extends CredentialsSignin {code="disabled";}
+const digest=(value:string)=>createHash("sha256").update(value).digest("hex");
+const maxAge=8*60*60;
 const devSecret=readEnvironment().appEnv==="development"?(process.env.AUTH_SECRET ||= randomBytes(48).toString("hex")):undefined;
+async function failed(reason:string,userId?:string){
+ await db.auditLog.create({data:{actorUserId:userId??"anonymous",requestId:requestContext()?.requestId,action:"login.failed",resource:"authentication",after:{reason}}});
+ authTrace("auth.login.denied","credentials",reason);
+}
 export const {handlers,auth,signIn,signOut}=NextAuth({
- useSecureCookies:readEnvironment().deployed||process.env.AUTH_URL?.startsWith("https://"),adapter,secret:process.env.AUTH_SECRET||devSecret,trustHost:true,session:{strategy:"database",maxAge:8*60*60,updateAge:60*30},
- pages:{signIn:"/login",verifyRequest:"/login?sent=1",error:"/login?error=1"},
- providers:[Resend({sendVerificationRequest:sendLoginEmail,apiKey:process.env.RESEND_API_KEY||process.env.AUTH_RESEND_KEY,from:process.env.AUTH_EMAIL_FROM||"IntentBridge <login@example.invalid>",maxAge:15*60,normalizeIdentifier(email){const value=email.trim().toLowerCase();if(value.length>254||!/^[-a-z0-9._+]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(value)){const error=new Error("Invalid email");error.name="InvalidEmailError";authFailure("auth.validation.failed","email.validate",error);throw error;}return value;}})],
+ useSecureCookies:readEnvironment().deployed||process.env.AUTH_URL?.startsWith("https://"),secret:process.env.AUTH_SECRET||devSecret,trustHost:true,
+ // Auth.js Credentials supports JWT. Native encrypted cookies plus the existing
+ // Session table provide immediate server-side revocation without custom JWT encoding.
+ session:{strategy:"jwt",maxAge},pages:{signIn:"/login",error:"/login?error=1"},
+ providers:[Credentials({credentials:{email:{type:"email"},password:{type:"password"}},async authorize(credentials){
+  const email=normalizeEmail(credentials.email),password=credentials.password;
+  if(!validEmail(email)||typeof password!=="string"||password.length<8||password.length>128){await failed("invalid_credentials");return null;}
+  const user=await db.user.findUnique({where:{email}});
+  if(!await verifyPassword(user?.passwordHash??null,password)){await failed("invalid_credentials");return null;}
+  if(user!.status!=="ACTIVE"){
+   await failed(user!.status==="DISABLED"?"disabled":"pending",user!.id);
+   if(user!.status==="DISABLED")throw new DisabledUser();throw new PendingUser();
+  }
+  return {id:user!.id,email:user!.email,name:user!.name};
+ }})],
  callbacks:{
-  async signIn({user}){
-   const u=user.email?await authOperation("user.policy.lookup",()=>db.user.findUnique({where:{email:user.email!.toLowerCase()},include:{invitations:true}})):null;
-   const reason=emailLoginDecision(u),allowed=emailLoginAllowed(reason);
-   authTrace(allowed?"auth.user.allowed":"auth.user.denied","user.policy",reason);
-   if(!allowed){const context=requestContext();if(context)context.authFailureStage="user.policy";}
-   return allowed;
+  async jwt({token,user}){
+   if(user){
+    const sessionId=randomBytes(32).toString("hex");
+    const valid=await transaction(async tx=>{
+     const current=await tx.user.findUnique({where:{id:user.id}});if(!current||current.status!=="ACTIVE")return false;
+     await tx.session.create({data:{sessionToken:digest(sessionId),userId:current.id,expires:new Date(Date.now()+maxAge*1000)}});
+     await tx.user.update({where:{id:current.id},data:{lastLoginAt:new Date()}});
+     await tx.auditLog.create({data:{actorUserId:current.id,requestId:requestContext()?.requestId,action:"login.success",resource:"authentication"}});return true;
+    });
+    if(!valid)return null;token.sub=user.id;token.sessionId=sessionId;
+   }
+   if(typeof token.sessionId!=="string"||!token.sub)return null;
+   const record=await db.session.findUnique({where:{sessionToken:digest(token.sessionId)},include:{user:{select:{status:true}}}});
+   if(!record||record.userId!==token.sub||record.expires<=new Date()||record.user.status!=="ACTIVE")return null;
+   return token;
   },
-  async session({session,user}){session.user={...session.user,id:user.id};return session;},
+  async session({session,token}){session.user={...session.user,id:token.sub!};return session;},
  },
- events:{async signIn({user}){await authOperation("user.activate",()=>db.$transaction([db.user.updateMany({where:{id:user.id,status:{in:["ACTIVE","INVITED"]}},data:{status:"ACTIVE",lastLoginAt:new Date()}}),db.invitation.updateMany({where:{userId:user.id,acceptedAt:null},data:{acceptedAt:new Date()}})]));authTrace("auth.signin.completed","callback");}},
+ events:{async signOut(message){if("token" in message&&typeof message.token?.sessionId==="string")await db.session.deleteMany({where:{sessionToken:digest(message.token.sessionId)}});}},
  logger:{error(error){authFailure("auth.failed",requestContext()?.authFailureStage??"auth.handler",error);},warn(){},debug(){}},
 });

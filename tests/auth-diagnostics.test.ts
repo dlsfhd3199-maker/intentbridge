@@ -34,7 +34,7 @@ test("메일 실패와 동시 토큰 실패의 로그는 requestId·stage·HTTP 
 });
 test("빈 로컬 DB 진단 → 기존 명시적 관리자 생성 → 재실행 거부 (외부 DB 미접속)",()=>{
  const temporaryRoot=resolve(tmpdir());const directory=mkdtempSync(join(temporaryRoot,"intentbridge-auth-"));
- const env={...process.env,RUST_LOG:"info",DATABASE_URL:"file:"+join(directory,"auth.db").replaceAll("\\","/"),INITIAL_ADMIN_EMAIL:"first-admin@example.invalid",AUTH_DIAGNOSTIC_EMAIL:"first-admin@example.invalid"};
+ const env={...process.env,RUST_LOG:"info",DATABASE_URL:"file:"+join(directory,"auth.db").replaceAll("\\","/"),INITIAL_ADMIN_PASSWORD:"Isolated-test-password-123!",INITIAL_ADMIN_EMAIL:"first-admin@example.invalid",AUTH_DIAGNOSTIC_EMAIL:"first-admin@example.invalid"};
  const run=(args:string[])=>spawnSync(process.execPath,args,{cwd:process.cwd(),env,encoding:"utf8",timeout:60000});
  const cli=(file:string)=>run(["node_modules/tsx/dist/cli.mjs",file]);
  try{

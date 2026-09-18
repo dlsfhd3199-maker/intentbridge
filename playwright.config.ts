@@ -1,3 +1,5 @@
+import {randomBytes} from "node:crypto";
+process.env.TEST_LOGIN_PASSWORD ||= randomBytes(24).toString("hex");
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/browser", fullyParallel: false, workers: 1,

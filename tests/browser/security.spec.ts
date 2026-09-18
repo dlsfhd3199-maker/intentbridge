@@ -1,6 +1,6 @@
 import {test,expect,loginAs,saved} from "./fixtures";
 import {PrismaClient} from "@prisma/client";
-import {createHash} from "node:crypto";
+import {hashPassword} from "../../lib/password";
 const db=new PrismaClient({datasourceUrl:"file:./browser-test.db"});
 test("미인증 페이지·API는 거부되고 위조한 Mock Role 쿠키도 무시한다",async({page})=>{
  await page.context().clearCookies();await page.context().addCookies([{name:"intentbridge-qa-role",value:"admin",domain:"localhost",path:"/"}]);
@@ -24,12 +24,13 @@ test("ADMIN A/B 접근·서버 저장·세션 해시·Audit·CSRF·revision 충�
  const documents=await (await page.request.get("/api/workspace-documents?advertiser=brand-a")).json();const doc=documents.find((d:{key:string})=>d.key==="intentbridge:campaigns:v1:brand-a");expect(doc.revision).toBeGreaterThan(0);
  const payload={key:doc.key,payload:doc.payload,revision:0};expect((await page.request.put("/api/workspace-data",{data:payload,headers:{Origin:"http://localhost:3100"}})).status()).toBe(409);expect((await page.request.put("/api/workspace-data",{data:payload,headers:{Origin:"https://attacker.invalid"}})).status()).toBe(403);
  const other=structuredClone(doc.payload);other.campaigns[0].advertiserId="brand-b";expect((await page.request.put("/api/workspace-data",{data:{...payload,payload:other,revision:doc.revision},headers:{Origin:"http://localhost:3100"}})).status()).toBe(400);
- const cookie=(await page.context().cookies()).find(c=>c.name.endsWith("session-token"))!;expect(cookie.httpOnly).toBe(true);const session=await db.session.findFirst({where:{userId:"dev-admin",sessionToken:createHash("sha256").update(cookie.value).digest("hex")}});expect(session).toBeTruthy();expect(session!.sessionToken).not.toBe(cookie.value);
+ const cookie=(await page.context().cookies()).find(c=>c.name.endsWith("session-token"))!;expect(cookie.httpOnly).toBe(true);const session=await db.session.findFirst({where:{userId:"dev-admin",}});expect(session).toBeTruthy();expect(session!.sessionToken).not.toBe(cookie.value);
  const audit=await (await page.request.get("/api/admin/audit")).json();expect(audit.some((a:{actorUserId:string;advertiserId:string})=>a.actorUserId==="dev-admin"&&a.advertiserId==="brand-a")).toBe(true);expect(await page.evaluate(()=>JSON.stringify(localStorage))).toBe("{}");
 });
-test("초대·사용자 연결·비활성화·마지막 관리자 보호는 서버에서 처리한다",async({page})=>{
+test("승인·사용자 연결·비활성화·마지막 관리자 보호는 서버에서 처리한다",async({page})=>{
  const headers={Origin:"http://localhost:3100"};const email=`invite-${Date.now()}@intentbridge.test`;
- const created=await page.request.post("/api/admin/users",{headers,data:{name:"검수 사용자",email,role:"ADVERTISER",advertiserIds:["brand-a"]}});expect(created.status()).toBe(200);const user=await created.json();expect(user.status).toBe("INVITED");const invitation=await db.invitation.findFirst({where:{userId:user.id}});expect(invitation?.tokenHash).toMatch(/^[a-f0-9]{64}$/);
+ const user=await db.user.create({data:{email,name:"검수 사용자",role:"ADVERTISER",status:"PENDING",passwordHash:await hashPassword(process.env.TEST_LOGIN_PASSWORD!)}});
+ expect((await page.request.patch("/api/admin/users",{headers,data:{id:user.id,action:"approve",advertiserId:"brand-a"}})).status()).toBe(200);
  await page.waitForLoadState("networkidle");const adminCookies=await page.context().cookies();await loginAs(page,email);expect((await db.user.findUnique({where:{id:user.id}}))?.status).toBe("ACTIVE");await page.waitForLoadState("networkidle");const inviteCookies=await page.context().cookies();await page.context().clearCookies();await page.context().addCookies(adminCookies);await page.goto("/");await page.waitForLoadState("networkidle");
  expect((await page.request.patch("/api/admin/users",{headers,data:{id:user.id,name:user.name,role:"ADVERTISER",status:"DISABLED",advertiserIds:["brand-b"]}})).status()).toBe(200);
  expect((await page.request.patch("/api/admin/users",{headers,data:{id:"dev-admin",name:"Admin",role:"ADVERTISER",status:"ACTIVE",advertiserIds:["brand-a"]}})).status()).toBe(409);
@@ -37,13 +38,14 @@ test("초대·사용자 연결·비활성화·마지막 관리자 보호는 서�
  await db.user.delete({where:{id:user.id}});
 });
 test("만료 세션은 DB에서 확인하며 보호 페이지로 재진입할 수 없다",async({page})=>{
- const cookie=(await page.context().cookies()).find(c=>c.name.endsWith("session-token"))!;const token=createHash("sha256").update(cookie.value).digest("hex");await db.session.update({where:{sessionToken:token},data:{expires:new Date(0)}});expect((await page.request.get("/api/bootstrap")).status()).toBe(401);await page.goto("/reports");await expect(page).toHaveURL(/\/login/);
+ const cookie=(await page.context().cookies()).find(c=>c.name.endsWith("session-token"))!;expect(cookie.httpOnly).toBe(true);await db.session.updateMany({where:{userId:"dev-admin"},data:{expires:new Date(0)}});expect((await page.request.get("/api/bootstrap")).status()).toBe(401);await page.goto("/reports");await expect(page).toHaveURL(/\/login/);
 });
-test("관리자 UI에서 광고주 생성·수정·사용자 초대를 저장하고 Audit에 기록한다",async({page})=>{
+test("관리자 UI에서 광고주 생성·수정·사용자 승인를 저장하고 Audit에 기록한다",async({page})=>{
  const name=`검수 Workspace ${Date.now()}`,email=`ui-${Date.now()}@intentbridge.test`;let workspaceId:string|undefined;
  try{
   await page.goto("/advertisers");await page.getByLabel("광고주 이름",{exact:true}).fill(name);await page.getByLabel("업종",{exact:true}).fill("검수");await page.getByLabel("대표 상품",{exact:true}).fill("검수 상품");await page.getByRole("button",{name:"광고주 생성",exact:true}).click();await expect(page.locator(".ux-advertiser-row")).toContainText(["브랜드 A","브랜드 B",name]);
   workspaceId=(await db.advertiser.findFirst({where:{name}}))!.id;await page.getByRole("button",{name:`${name} 수정`,exact:true}).click();await page.getByLabel("광고주 이름",{exact:true}).fill(name+" 수정");await page.getByRole("button",{name:"광고주 변경 저장",exact:true}).click();await expect(page.getByRole("button",{name:`${name} 수정 수정`,exact:true})).toBeVisible();
-  await page.goto(`/advertisers/${workspaceId}`);await page.getByLabel("이름",{exact:true}).fill("UI 초대");await page.getByLabel("이메일",{exact:true}).fill(email);await page.getByRole("button",{name:"초대 등록",exact:true}).click();await expect(page.locator("table")).toContainText(email);await expect(page.locator("table")).toContainText("INVITED");expect(await db.auditLog.count({where:{advertiserId:workspaceId}})).toBeGreaterThanOrEqual(2);
+  await db.user.create({data:{email,name:"UI 승인",status:"PENDING",passwordHash:await hashPassword(process.env.TEST_LOGIN_PASSWORD!)}});
+  await page.goto(`/advertisers/${workspaceId}`);const row=page.getByRole("row").filter({hasText:email});await row.getByRole("button",{name:"승인 및 광고주 연결"}).click();await page.getByRole("dialog").getByLabel("연결할 광고주").selectOption(workspaceId!);await page.getByRole("button",{name:"승인 및 연결",exact:true}).click();await expect(row).toContainText("ACTIVE");expect(await db.auditLog.count({where:{advertiserId:workspaceId}})).toBeGreaterThanOrEqual(2);
  }finally{await db.user.deleteMany({where:{email}});if(workspaceId)await db.advertiser.delete({where:{id:workspaceId}});}
 });

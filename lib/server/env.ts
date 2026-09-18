@@ -7,7 +7,7 @@ export function readEnvironment(source:Record<string,string|undefined>=process.e
 }
 export function validateEnvironment(source:Record<string,string|undefined>=process.env){
  const config=readEnvironment(source),missing:string[]=[];
- if(config.deployed){if(!config.databaseUrl||!/^postgres(ql)?:\/\//.test(config.databaseUrl))missing.push("DATABASE_URL (PostgreSQL)");if(!config.authSecret||config.authSecret.length<32)missing.push("AUTH_SECRET (32+ characters)");try{if(new URL(config.authUrl??"").protocol!=="https:")missing.push("AUTH_URL (HTTPS)")}catch{missing.push("AUTH_URL (HTTPS)")}if(!config.emailKey)missing.push("RESEND_API_KEY");if(!config.emailFrom||!/@/.test(config.emailFrom))missing.push("AUTH_EMAIL_FROM");}
+ if(config.deployed){if(!config.databaseUrl||!/^postgres(ql)?:\/\//.test(config.databaseUrl))missing.push("DATABASE_URL (PostgreSQL)");if(!config.authSecret||config.authSecret.length<32)missing.push("AUTH_SECRET (32+ characters)");try{if(new URL(config.authUrl??"").protocol!=="https:")missing.push("AUTH_URL (HTTPS)")}catch{missing.push("AUTH_URL (HTTPS)")}}
  if(!["info","warn","error"].includes(config.logLevel))missing.push("LOG_LEVEL");
  if(!["memory","database"].includes(config.rateStore))missing.push("RATE_LIMIT_STORE");
  if(config.appEnv==="production"&&config.rateStore!=="database")missing.push("RATE_LIMIT_STORE (shared database required)");

@@ -28,6 +28,7 @@ export const authStyles = `
 .auth-login-panel .auth-recipient{color:#172238;font-weight:650;overflow-wrap:anywhere;word-break:normal}
 .auth-loading-inline{display:flex;gap:12px;align-items:center;color:#596477;font-size:16px;line-height:1.7;padding:14px 0}
 .auth-dot{width:10px;height:10px;border-radius:50%;background:#22b98f;flex:none}
+.auth-credentials{max-width:520px}.auth-credentials input{width:100%;min-width:0;border:1px solid #aab5c2;border-radius:8px;padding:12px 14px;font:16px Arial,sans-serif;background:white;color:#172238;margin-top:6px}.auth-credentials label{margin-top:14px}.auth-password{display:flex;gap:8px}.auth-password input{flex:1}.auth-password button{background:#f3f1fd;border:1px solid #dcd5f3;border-radius:8px;padding:0 14px;color:#51429a;font:inherit}.auth-credentials>.auth-primary{margin-top:18px;width:100%}.auth-login-panel .auth-switch{margin-top:18px}.auth-switch button{padding:8px 12px}
 .auth-notice{border:1px solid #dce1df;border-left:4px solid #8068ff;padding:20px 24px;border-radius:10px;background:#f8f9fc;color:#172238;font-size:16px;line-height:1.7}
 .auth-notice h2{font-size:24px;margin:0 0 8px}.auth-notice p{margin:0 0 12px}.auth-notice a{color:#51429a;text-decoration:underline;font-weight:650}
 .session-expired.auth-notice{margin:16px 24px}.auth-screen *{box-sizing:border-box}

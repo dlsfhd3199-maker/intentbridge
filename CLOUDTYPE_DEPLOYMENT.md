@@ -1,3 +1,5 @@
+> **현재 인증 안내:** 이메일·비밀번호 회원가입과 관리자 승인 방식으로 전환했습니다. 아래 과거 Magic Link/필수 Resend/DB Session 안내보다 [AUTH_CREDENTIALS_MIGRATION.md](AUTH_CREDENTIALS_MIGRATION.md)가 우선합니다. 기존 계정은 비밀번호 초기 설정과 재로그인이 필요합니다.
+
 # IntentBridge · Cloudtype Staging Docker 배포
 
 기존 기능/UI/Auth.js/Resend/권한/Tenant Isolation을 유지합니다. Cloudtype에는 Dockerfile 방식으로 배포하며 PostgreSQL을 사용합니다. GA4/Meta/ChatGPT Ads는 Mock으로 유지합니다. 실제 Secret 값은 이 문서나 이미지에 포함하지 않습니다.

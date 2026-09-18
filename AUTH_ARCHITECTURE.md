@@ -1,3 +1,5 @@
+> **현재 인증 안내:** 이메일·비밀번호 회원가입과 관리자 승인 방식으로 전환했습니다. 아래 과거 Magic Link/필수 Resend/DB Session 안내보다 [AUTH_CREDENTIALS_MIGRATION.md](AUTH_CREDENTIALS_MIGRATION.md)가 우선합니다. 기존 계정은 비밀번호 초기 설정과 재로그인이 필요합니다.
+
 > Production Foundation 변경: PostgreSQL 전용 schema/migration, 원자적 문서 배치·idempotency, 공유 DB rate limit, nonce CSP/서버 환경 검증을 추가했습니다. 아래 이전 단계의 미구현 목록은 역사 기록입니다. 현재 배포 절차/한계는 [DEPLOYMENT.md](DEPLOYMENT.md)를 기준으로 확인하세요.
 
 # IntentBridge · 실제 서비스 기반

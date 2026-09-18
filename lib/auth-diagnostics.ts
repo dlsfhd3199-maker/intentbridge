@@ -1,5 +1,5 @@
 // Closed vocabularies only: never serialize an Error's message, stack, or arbitrary name.
-const categories = new Set(["AccessDenied", "AdapterError", "Configuration", "MissingSecret", "MissingCSRF", "InvalidCheck", "Verification", "EmailSignInError", "CallbackRouteError", "SessionTokenError", "UnknownAction", "UnsupportedStrategy", "UntrustedHost", "InvalidCallbackUrl"]);
+const categories = new Set(["CredentialsSignin", "JWTSessionError", "SignOutError", "AccessDenied", "AdapterError", "Configuration", "MissingSecret", "MissingCSRF", "InvalidCheck", "Verification", "EmailSignInError", "CallbackRouteError", "SessionTokenError", "UnknownAction", "UnsupportedStrategy", "UntrustedHost", "InvalidCallbackUrl"]);
 const causes = new Set(["Error", "TypeError", "TimeoutError", "AbortError", "EmailDeliveryError", "InvalidEmailError", "PrismaClientKnownRequestError", "PrismaClientUnknownRequestError", "PrismaClientInitializationError", "PrismaClientValidationError", "PrismaClientRustPanicError"]);
 const dbCodes = new Set(["P1000", "P1001", "P1002", "P1003", "P1008", "P1010", "P1011", "P1012", "P1017", "P2002", "P2021", "P2022", "P2024", "P2025"]);
 const object = (value: unknown): Record<string, unknown> => value && typeof value === "object" ? value as Record<string, unknown> : {};
