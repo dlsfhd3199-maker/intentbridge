@@ -69,4 +69,4 @@ function WorkspaceContent({ data }: { data: FunnelWorkspaceData }) {
   </div>;
 }
 
-export function FunnelWorkspace(){const {user}=useUserRole(),{mode}=useGA4();if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard view="funnel"/>;return mode==="real"?<GA4AnalyticsView page="funnel"/>:<MockFunnelWorkspace/>;}
+export function FunnelWorkspace(){const {user}=useUserRole(),{mode}=useGA4();if(!can(user.role,"MANAGE_CAMPAIGN"))return <AdvertiserDashboard view="funnel"/>;return mode==="real"?<GA4AnalyticsView page="funnel"/>:<MockFunnelWorkspace/>;}

@@ -90,4 +90,4 @@ function LabContent({ baseline: b }: { baseline: BaselineMetrics }) {
   </div>;
 }
 
-export function PerformanceLab(){const {user}=useUserRole(),{mode}=useGA4();if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard view="performance"/>;return mode==="real"?<GA4AnalyticsView page="performance"/>:<MockPerformanceLab/>;}
+export function PerformanceLab(){const {user}=useUserRole(),{mode}=useGA4();if(!can(user.role,"MANAGE_CAMPAIGN"))return <AdvertiserDashboard view="performance"/>;return mode==="real"?<GA4AnalyticsView page="performance"/>:<MockPerformanceLab/>;}

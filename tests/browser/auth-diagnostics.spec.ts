@@ -22,7 +22,7 @@ test("회원가입 → PENDING 차단 → 관리자 승인/연결 → ACTIVE 로
 test("가입 입력·중복·CSRF·Role/광고주 주입과 반복 가입 방어",async({page})=>{
  const data={name:"검수",email:crypto.randomUUID()+"@invalid.test",password:process.env.TEST_LOGIN_PASSWORD!,passwordConfirm:process.env.TEST_LOGIN_PASSWORD!};
  expect((await page.request.post("/api/auth/signup",{headers:{Origin:"https://attacker.invalid"},data})).status()).toBe(403);
- for(const patch of [{email:"bad"},{password:"short"},{password:"12345678",passwordConfirm:"12345678"},{name:"x".repeat(121)},{role:"ADMIN"},{advertiserId:"brand-a"}])expect((await page.request.post("/api/auth/signup",{headers,data:{...data,...patch}})).status()).toBe(400);
+ for(const patch of [{email:"bad"},{password:"short"},{password:"12345678",passwordConfirm:"12345678"},{name:"x".repeat(121)},{role:"SUPER_ADMIN"},{advertiserId:"brand-a"}])expect((await page.request.post("/api/auth/signup",{headers,data:{...data,...patch}})).status()).toBe(400);
  expect((await page.request.post("/api/auth/signup",{headers,data:{...data,email:"admin@intentbridge.test"}})).status()).toBe(409);
  const oversized=await page.request.post("/api/auth/signup",{headers,data:{...data,name:"x".repeat(5000)}});expect(oversized.status()).toBe(413);
  let limited;for(let i=0;i<2;i++)limited=await page.request.post("/api/auth/signup",{headers,data:{...data,password:"short"}});expect(limited!.status()).toBe(429);

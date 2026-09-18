@@ -29,4 +29,4 @@ function MockOverview() {
   </div>;
 }
 
-export function Overview(){const {user}=useUserRole(),{mode}=useGA4();if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard/>;return <><AdminDashboard/><details className="ux-admin-detail"><summary>선택한 광고주 상세 성과 보기</summary>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</details></>;}
+export function Overview(){const {user}=useUserRole(),{mode}=useGA4();if(user.role==="manager")return <><AdminDashboard assigned/><details className="ux-admin-detail"><summary>선택한 광고주 상세 성과 보기</summary>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</details></>;if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard/>;return <><AdminDashboard/><details className="ux-admin-detail"><summary>선택한 광고주 상세 성과 보기</summary>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</details></>;}

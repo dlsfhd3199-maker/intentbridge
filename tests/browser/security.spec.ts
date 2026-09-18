@@ -3,7 +3,7 @@ import {PrismaClient} from "@prisma/client";
 import {hashPassword} from "../../lib/password";
 const db=new PrismaClient({datasourceUrl:"file:./browser-test.db"});
 test("미인증 페이지·API는 거부되고 위조한 Mock Role 쿠키도 무시한다",async({page})=>{
- await page.context().clearCookies();await page.context().addCookies([{name:"intentbridge-qa-role",value:"admin",domain:"localhost",path:"/"}]);
+ await page.context().clearCookies();await page.context().addCookies([{name:"intentbridge-qa-role",value:"super_admin",domain:"localhost",path:"/"}]);
  for(const route of ["/","/campaigns","/operations","/settings","/reports"]){await page.goto(route);await expect(page).toHaveURL(/\/login/)}
  for(const route of ["/api/bootstrap","/api/admin/users","/api/admin/audit","/api/workspaces/brand-a","/api/ga4?advertiser=brand-a"]){expect((await page.request.get(route)).status()).toBe(401)}
 });
@@ -11,12 +11,12 @@ for(const [email,own,other,otherName]of [["a@intentbridge.test","brand-a","brand
  await loginAs(page,email);const bootstrap=await (await page.request.get("/api/bootstrap")).json();expect(bootstrap.fixtures.advertisers.map((a:{id:string})=>a.id)).toEqual([own]);expect(JSON.stringify(bootstrap)).not.toContain(otherName);expect(await page.content()).not.toContain(otherName);await expect(page.getByLabel("현재 보기")).toHaveCount(0);
  expect((await page.request.get(`/api/workspaces/${own}`)).status()).toBe(200);await page.goto(`/advertisers/${own}`);await expect(page.getByText("할당된 워크스페이스입니다.",{exact:false})).toBeVisible();
  for(const route of [`/advertisers/${other}`,`/campaigns?advertiser=${other}`,`/performance?advertiser=${other}`,`/reports?advertiser=${other}`,"/operations","/connections","/settings"]){const response=await page.goto(route);expect(response?.status()).toBe(403);expect(await page.content()).not.toContain(otherName);await expect(page.getByRole("heading",{name:"이 페이지에 접근할 권한이 없습니다."})).toBeVisible();}
- await page.context().addCookies([{name:"intentbridge-qa-role",value:"admin",domain:"localhost",path:"/"}]);await page.evaluate(()=>{localStorage.setItem("role","admin");localStorage.setItem("advertiserId","brand-b")});
+ await page.context().addCookies([{name:"intentbridge-qa-role",value:"super_admin",domain:"localhost",path:"/"}]);await page.evaluate(()=>{localStorage.setItem("role","super_admin");localStorage.setItem("advertiserId","brand-b")});
  for(const route of [`/api/workspaces/${other}`,`/api/ga4?advertiser=${other}`,`/api/workspaces/${own}/connection`,"/api/admin/users","/api/admin/audit"]){const r=await page.request.get(route);expect(r.status()).toBe(403);expect(await r.text()).not.toContain(otherName)}
  for(const path of [`/api/ga4?advertiser=${own}&mode=real`,`/api/ga4?advertiser=${own}`])expect((await page.request.post(path,{headers:{Origin:"http://localhost:3100"}})).status()).toBe(403);
  expect((await page.request.get(`/api/ga4?advertiser=${own}&mode=mock`)).status()).toBe(403);
  expect((await page.request.put("/api/workspace-data",{headers:{Origin:"http://localhost:3100"},data:{key:`intentbridge:campaigns:v1:${own}`,revision:0,payload:{}}})).status()).toBe(403);
- expect((await page.request.patch("/api/admin/users",{headers:{Origin:"http://localhost:3100"},data:{id:"dev-a",role:"ADMIN",status:"ACTIVE",advertiserIds:[own]}})).status()).toBe(403);
+ expect((await page.request.patch("/api/admin/users",{headers:{Origin:"http://localhost:3100"},data:{id:"dev-a",role:"SUPER_ADMIN",status:"ACTIVE",advertiserIds:[own]}})).status()).toBe(403);
 });
 test("ADMIN A/B 접근·서버 저장·세션 해시·Audit·CSRF·revision 충돌",async({page})=>{
  for(const id of ["brand-a","brand-b"])expect((await page.request.get(`/api/workspaces/${id}`)).status()).toBe(200);

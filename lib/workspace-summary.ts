@@ -1,5 +1,5 @@
 import {serverStorageInstalled,flushServerStorage} from "./server-storage";
-import {assertAccess} from "./permissions";
+import {assertAccess,canAccessAdvertiser,currentUser} from "./permissions";
 import {advertisers,getDashboard} from "./dashboard";
 import {loadFunnelWorkspace} from "./funnel";
 import {loadPerformanceBaseline} from "./simulation/baseline";
@@ -12,3 +12,5 @@ export type WorkspaceSummary=Awaited<ReturnType<typeof calculateWorkspaceSummary
 export async function loadAdminSummary(period:Period){assertAccess(undefined,"VIEW_ALL_ADVERTISERS");if(typeof window!=="undefined"&&serverStorageInstalled()){await flushServerStorage();const response=await fetch(`/api/admin/workspace-summaries?period=${period}`,{cache:"no-store"});if(!response.ok)throw new Error("광고주 요약을 불러오지 못했습니다.");return response.json() as Promise<WorkspaceSummary[]>;}return Promise.all(advertisers.map(a=>loadWorkspaceSummary({advertiserId:a.id,period})));}
 
 export async function loadWorkspaceSummary(query:Query):Promise<WorkspaceSummary>{if(typeof window!=="undefined"&&serverStorageInstalled()){await flushServerStorage();const response=await fetch(`/api/workspace-summary?advertiser=${encodeURIComponent(query.advertiserId)}&period=${query.period}`,{cache:"no-store"});if(!response.ok)throw new Error("워크스페이스 요약을 불러오지 못했습니다.");return response.json()}return calculateWorkspaceSummary(query)}
+
+export async function loadAssignedSummary(period:Period){assertAccess(undefined,"VIEW_WORKSPACE_SUMMARIES");if(typeof window!=="undefined"&&serverStorageInstalled()){await flushServerStorage();const response=await fetch(`/api/workspace-summaries?period=${period}`,{cache:"no-store"});if(!response.ok)throw new Error("담당 광고주 요약을 불러오지 못했습니다.");return response.json() as Promise<WorkspaceSummary[]>;}return Promise.all(advertisers.filter(a=>canAccessAdvertiser(currentUser(),a.id)).map(a=>loadWorkspaceSummary({advertiserId:a.id,period})));}

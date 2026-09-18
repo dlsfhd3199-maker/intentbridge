@@ -30,12 +30,13 @@ export function useDashboard() {
 function Shell({ children, advertisers, initialData }: { children: React.ReactNode; advertisers: Advertiser[]; initialData: DashboardData }) {
   const pathname = usePathname(),search=useSearchParams();
   const {user,ready,qaSwitch,changeRole}=useUserRole();
-  const admin=can(user.role,"VIEW_ALL_ADVERTISERS");
+  const admin=can(user.role,"MANAGE_CAMPAIGN");
+  const selectable=admin||advertisers.length>1;
   const requestedId=search.get("advertiser");
   const deniedWorkspace=!!requestedId&&!canAccessAdvertiser(user,requestedId);
   const items=navigation.filter(n=>canAccessRoute(user,n.href)).map(n=>({...n,name:n.href==="/campaigns"&&!can(user.role,"MANAGE_CAMPAIGN")?"광고 현황":n.name}));
   const [advertiserId, setAdvertiserId] = useState(()=>requestedId&&advertisers.some(a=>a.id===requestedId)?requestedId:initialData.advertiser.id);
-  const scopeId=admin?advertiserId:user.advertiserId;
+  const scopeId=advertiserId;
   const [period, setPeriod] = useState<Period>(()=>[7,14,30].includes(Number(search.get("period")))?Number(search.get("period")) as Period:30);
   const [density, setDensity] = useState<AppSettings["density"]>("comfortable");
   useEffect(() => {
@@ -60,7 +61,7 @@ function Shell({ children, advertisers, initialData }: { children: React.ReactNo
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [scopeId, period, user.role]);
-  useEffect(()=>{if(admin&&requestedId&&advertisers.some(a=>a.id===requestedId))setAdvertiserId(requestedId);},[admin,requestedId,advertisers]);
+  useEffect(()=>{if(requestedId&&advertisers.some(a=>a.id===requestedId))setAdvertiserId(requestedId);},[admin,requestedId,advertisers]);
   const selectWorkspace=(id:string,days:Period)=>{const url=new URL(window.location.href);url.searchParams.set("advertiser",id);url.searchParams.set("period",String(days));window.history.replaceState(null,"",url.pathname+url.search);setAdvertiserId(id);setPeriod(days);};
   const current = items.find(item => item.href === pathname);
   return <SelectionContext.Provider value={(id, days) => { if (canAccessAdvertiser(user,id)&&advertisers.some(a => a.id === id)) { selectWorkspace(id,days); } }}><DashboardContext.Provider value={data}>
@@ -70,11 +71,11 @@ function Shell({ children, advertisers, initialData }: { children: React.ReactNo
         <Link href="/" className="brand" aria-label="IntentBridge 홈"><span className="brand-symbol"/><span>IntentBridge<small>CROSS-MEDIA GROWTH OS</small></span></Link>
         <div className="workspace-label">YOUR WORKSPACE <span>01</span></div>
         <nav aria-label="주 메뉴">{items.map(({ href, name, caption }) => <Link key={href} href={["/campaigns","/operations"].includes(href) ? `${href}?advertiser=${scopeId}&period=${period}` : href} className={`nav-item ${pathname === href ? "active" : ""}`} aria-current={pathname === href ? "page" : undefined}><LayoutDashboard size={18}/><span>{name}<small>{caption}</small></span>{pathname === href && <ChevronRight size={14}/>}</Link>)}</nav>
-        <div className="sidebar-bottom"><p className="role-note">{user.email}</p>{qaSwitch?<label className="role-switch">현재 보기<select aria-label="현재 보기" value={user.role} onChange={e=>changeRole(e.target.value as "admin"|"advertiser")}><option value="admin">관리자 보기</option><option value="advertiser">광고주 보기</option></select></label>:<p>로그인됨 · 권한에 따라 표시</p>}<button className="logout-button" onClick={async()=>{try{await flushServerStorage();await signOut({redirectTo:"/login"});}catch{/* Save status provides recovery without discarding drafts. */}}}>로그아웃</button></div>
+        <div className="sidebar-bottom"><p className="role-note">{user.email}</p>{qaSwitch?<label className="role-switch">현재 보기<select aria-label="현재 보기" value={user.role} onChange={e=>changeRole(e.target.value as "super_admin"|"manager"|"advertiser")}><option value="super_admin">최고 관리자 보기</option><option value="manager">내부 마케터 보기</option><option value="advertiser">광고주 보기</option></select></label>:<p>로그인됨 · 권한에 따라 표시</p>}<button className="logout-button" onClick={async()=>{try{await flushServerStorage();await signOut({redirectTo:"/login"});}catch{/* Save status provides recovery without discarding drafts. */}}}>로그아웃</button></div>
       </aside>
       <div className="main-shell">
         <main id="main" className="main-content">
-          <header className="context-header"><div><span className="eyebrow">INTENTBRIDGE</span><h1>{current?.name??"접근 안내"}</h1></div><div className="advertiser-control"><label htmlFor="advertiser">광고주 워크스페이스</label>{admin?<select id="advertiser" value={scopeId} onChange={event=>selectWorkspace(event.target.value,period)}>{advertisers.map(item=><option key={item.id} value={item.id}>{item.name} · {item.productName}</option>)}</select>:<strong className="workspace-lock">{advertisers.find(a=>a.id===scopeId)?.name} · 내 워크스페이스 🔒</strong>}</div><div className="period-control"><span>조회 기간</span><div className="period-buttons" role="group" aria-label="조회 기간">{([7,14,30] as const).map(days=><button key={days} aria-pressed={period===days} onClick={()=>selectWorkspace(scopeId,days)} className={period===days?"selected":""}>{days}일</button>)}</div></div></header>
+          <header className="context-header"><div><span className="eyebrow">INTENTBRIDGE</span><h1>{current?.name??"접근 안내"}</h1></div><div className="advertiser-control"><label htmlFor="advertiser">광고주 워크스페이스</label>{selectable?<select id="advertiser" value={scopeId} onChange={event=>selectWorkspace(event.target.value,period)}>{advertisers.map(item=><option key={item.id} value={item.id}>{item.name} · {item.productName}</option>)}</select>:<strong className="workspace-lock">{advertisers.find(a=>a.id===scopeId)?.name} · 내 워크스페이스 🔒</strong>}</div><div className="period-control"><span>조회 기간</span><div className="period-buttons" role="group" aria-label="조회 기간">{([7,14,30] as const).map(days=><button key={days} aria-pressed={period===days} onClick={()=>selectWorkspace(scopeId,days)} className={period===days?"selected":""}>{days}일</button>)}</div></div></header>
           <div className="brand-context"><b>{advertisers.find(a=>a.id===scopeId)?.name}</b><span>{advertisers.find(a=>a.id===scopeId)?.productName}</span></div>
           <div aria-live="polite" className="sr-only">{loading ? "데이터 불러오는 중" : `${data.advertiser.name}, ${data.period}일 데이터 표시`}</div>
           {!ready?<p>화면 준비 중…</p>:!canAccessRoute(user,pathname)||deniedWorkspace?<AccessDenied workspace={deniedWorkspace}/>:error?<div role="alert" className="error-panel">{error}</div>:!admin&&(data.advertiser.id!==scopeId||data.period!==period)?<p>데이터 불러오는 중…</p>:<div aria-busy={loading}><GA4Provider key={user.role} query={{advertiserId:data.advertiser.id,period:data.period}}><WorkspaceDataGate advertiserId={data.advertiser.id}>{children}</WorkspaceDataGate></GA4Provider></div>}

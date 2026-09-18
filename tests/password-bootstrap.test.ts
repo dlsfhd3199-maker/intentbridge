@@ -12,7 +12,7 @@ test("기존 관리자/계정의 일회성 비밀번호 설정은 상태·Member
  const run=(args:string[])=>spawnSync(process.execPath,args,{env,encoding:"utf8",timeout:60000});const cli=(path:string)=>run(["node_modules/tsx/dist/cli.mjs",path]);const db=new PrismaClient({datasourceUrl:env.DATABASE_URL});
  try{
   assert.equal(run(["node_modules/prisma/build/index.js","migrate","deploy"]).status,0);
-  const admin=await db.user.create({data:{email:env.INITIAL_ADMIN_EMAIL,status:"ACTIVE",role:"ADMIN"}});
+  const admin=await db.user.create({data:{email:env.INITIAL_ADMIN_EMAIL,status:"ACTIVE",role:"SUPER_ADMIN"}});
   const user=await db.user.create({data:{email:env.AUTH_PASSWORD_EMAIL,status:"DISABLED",role:"ADVERTISER"}});
   const advertiser=await db.advertiser.create({data:{name:"Existing workspace",mockData:{}}});await db.advertiserMember.create({data:{userId:user.id,advertiserId:advertiser.id}});
   await db.session.create({data:{userId:admin.id,sessionToken:"old-session-test-hash",expires:new Date(Date.now()+10000)}});

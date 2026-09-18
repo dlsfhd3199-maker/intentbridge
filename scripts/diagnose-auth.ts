@@ -8,7 +8,7 @@ async function main(){
  try{
   db=new PrismaClient({datasourceUrl:process.env.DATABASE_URL});
   const [users,activeAdmins,activeUsers,invitedUsers,disabledUsers,advertisers,memberships,verificationTokens,sessions,pendingUsers]=await db.$transaction([
-   db.user.count(),db.user.count({where:{role:"ADMIN",status:"ACTIVE"}}),db.user.count({where:{status:"ACTIVE"}}),db.user.count({where:{status:"INVITED"}}),db.user.count({where:{status:"DISABLED"}}),db.advertiser.count(),db.advertiserMember.count(),db.verificationToken.count(),db.session.count(),db.user.count({where:{status:"PENDING"}}),
+   db.user.count(),db.user.count({where:{role:"SUPER_ADMIN",status:"ACTIVE"}}),db.user.count({where:{status:"ACTIVE"}}),db.user.count({where:{status:"INVITED"}}),db.user.count({where:{status:"DISABLED"}}),db.advertiser.count(),db.advertiserMember.count(),db.verificationToken.count(),db.session.count(),db.user.count({where:{status:"PENDING"}}),
   ]);
   const email=(process.env.AUTH_DIAGNOSTIC_EMAIL??process.env.INITIAL_ADMIN_EMAIL)?.trim().toLowerCase();
   const user=email?await db.user.findUnique({where:{email},select:{status:true,passwordHash:true}}):null;
