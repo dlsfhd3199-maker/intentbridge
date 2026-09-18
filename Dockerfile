@@ -33,9 +33,10 @@ COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/package.json /app/package-lock.json ./
 COPY --from=builder --chown=node:node /app/next.config.ts /app/tsconfig.json ./
 COPY --from=builder --chown=node:node /app/lib/security-headers.ts ./lib/security-headers.ts
+COPY --from=builder --chown=node:node /app/lib/auth-diagnostics.ts ./lib/auth-diagnostics.ts
 COPY --from=builder --chown=node:node /app/lib/server/env.ts ./lib/server/env.ts
 COPY --from=builder --chown=node:node /app/prisma/postgresql ./prisma/postgresql
-COPY --from=builder --chown=node:node /app/scripts/check-env.ts /app/scripts/create-admin.ts ./scripts/
+COPY --from=builder --chown=node:node /app/scripts/check-env.ts /app/scripts/create-admin.ts /app/scripts/diagnose-auth.ts ./scripts/
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \

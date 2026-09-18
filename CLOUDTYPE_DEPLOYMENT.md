@@ -127,10 +127,81 @@ docker run --rm --name intentbridge-staging -p 3000:3000 \
 
 위 명령은 POSIX 셸 예시입니다. 실제 Secret 값을 명령 인자에 직접 적지 않습니다. 기존 로컬 서버가 3000을 사용한다면 포트 매핑을 별도로 지정합니다. Dockerfile의 HEALTHCHECK도 PORT를 사용하며, Cloudtype에는 별도로 `/api/health` 경로를 설정합니다.
 
-## 이번 검증 결과
+## Docker 배포 준비 시점 검증 결과 (이전 작업)
 
 - 기존 `npm run build` 성공. `APP_ENV=staging`, `GA4_DATA_MODE=mock`을 적용한 빌드도 성공했습니다.
 - 실제 DB 연결 문자열 없이 PostgreSQL Prisma Client를 별도 임시 경로에서 생성했습니다. 로컬 개발용 Client는 교체하지 않았습니다.
 - production 서버를 별도 `PORT=3127`로 실행하여 `/api/health` HTTP 200, `{ "status": "ok" }`, Cache-Control=no-store 및 Staging 빌드의 HSTS를 확인했습니다. 런타임 검증은 실제 Secret 없이 APP_ENV=development로 수행한 로컬 liveness 검사이며 DB 접속/실제 Staging 로그인 검증은 아닙니다. 검증 서버는 종료했고 기존 3000 서버는 유지했습니다.
 - `docker build -t intentbridge-staging .`를 시도했으나 로컬 Docker Desktop Linux 엔진이 실행되어 있지 않아 빌드를 수행하지 못했습니다. Linux 이미지의 빌드/실행은 Cloudtype 또는 Docker 엔진 시작 후 검증해야 합니다.
 - Cloudtype 실제 배포, PostgreSQL migration 적용, Resend 실제 발송은 수행하지 않았습니다. 변경 파일은 Dockerfile, .dockerignore, 이 문서뿐이며 앱 코드/package.json/Next 설정/Prisma 모델은 그대로입니다.
+
+
+## Staging 이메일 로그인 진단 (2026-09-18)
+
+### 확인된 흐름과 실패 지점
+
+현재 설치된 next-auth 5.0.0-beta.32의 이메일 Provider는 DB Session과 함께 사용할 수 있습니다. 이 프로젝트는 Prisma를 사용하는 커스텀 Auth.js Adapter입니다. OAuth Account row는 이메일 로그인에 필요하지 않으며 현재 스키마에 Account 모델도 없습니다.
+
+로그인 폼 → /api/auth/signin/resend POST → Origin/크기/Rate Limit/CSRF/이메일 검증 → Adapter.getUserByEmail → callbacks.signIn의 사용자·초대 검사 → Resend 발송과 VerificationToken 저장(병렬) → 이메일 callback의 토큰 1회 소비 → 허용 여부 재검사 → DB Session 생성 → signIn event에서 사용자 활성화/초대 수락 → 기존 역할별 진입 화면 순서입니다.
+
+User가 없으면 signIn callback이 false를 반환하고 Auth.js가 AccessDenied를 발생시킵니다. 이때 메일 발송과 VerificationToken 저장은 둘 다 시작되지 않습니다. ACTIVE 사용자는 허용되며 INVITED는 미수락·미만료 초대가 있어야 합니다. DISABLED와 유효 초대가 없는 사용자는 계속 거부됩니다. Advertiser/Membership이 없는 최초 ADMIN도 이메일 로그인은 가능하며 로그인 후 관리 화면에서 구성합니다.
+
+기존 auth.failed 로거가 원본 오류를 모두 AuthenticationError로 덮어써 원인을 숨겼습니다. 이 로깅 결함과 미등록 사용자 차단 경로를 코드/로컬 테스트로 확인했습니다. **현재 Cloudtype DB의 사용자 존재 여부는 직접 확인하지 않았습니다. Resend 요청 0건만으로 빈 DB라고 확정할 수 없습니다.** 사용자 조회 DB 오류, CSRF/설정/입력 오류 역시 발송 전에 실패할 수 있으므로 아래 진단과 requestId 로그로 구분합니다.
+
+/api/bootstrap은 인증된 사용자의 워크스페이스 조회 API이며 최초 관리자 생성 API가 아닙니다. 호출하거나 브라우저로 열어도 관리자를 만들지 않습니다. 권한/테넌트 정책과 Provider, DB Session, Cookie, 토큰 해시, 만료·1회 사용 정책은 유지했습니다. redirect/authorized callback을 새로 추가하지 않았습니다.
+
+### Cloudtype에서 실행할 순서
+
+1. 수정된 Docker 이미지를 재배포합니다. 기존 Secret과 APP_ENV=staging, GA4_DATA_MODE=mock을 유지합니다. LOG_LEVEL=info로 설정하면 단계 로그를 볼 수 있습니다.
+2. 앱 컨테이너 터미널에서 다음 읽기 전용 진단을 실행합니다. DATABASE_URL은 기존 런타임 설정을 그대로 사용합니다.
+
+~~~sh
+npm run env:check
+npm run db:auth:check
+~~~
+
+진단은 User 전체/상태별/ACTIVE ADMIN, Advertiser, AdvertiserMember(Membership), VerificationToken, Session의 개수만 출력합니다. 토큰/세션 개수는 만료된 row를 포함한 총량이며 로그인의 성공 증거가 아닙니다. DB URL/비밀번호, 이메일, row ID, 토큰, Magic Link, API Key는 출력하지 않습니다. DB 쓰기나 메일 발송은 없습니다. DATABASE_URL이 없으면 진단은 실패하며 개발 DB로 대체하지 않습니다.
+
+3. 대상 이메일 정책까지 확인하려면 Cloudtype 런타임 변수 AUTH_DIAGNOSTIC_EMAIL에 로그인하려는 이메일을 설정한 뒤 같은 명령을 실행합니다. INITIAL_ADMIN_EMAIL이 있다면 해당 값을 대신 사용할 수 있습니다. 출력은 target.exists/allowed/reason만 제공합니다. 미등록이면 user_not_registered입니다. 이메일 값을 공유 로그나 명령 인자에 적지 않습니다.
+4. 정말 신규 DB이고 activeAdmins=0이라면, Cloudtype 환경변수 INITIAL_ADMIN_EMAIL에 소유자가 관리할 명시적 관리자 이메일을 설정하고 기존 명령을 한 번 실행합니다.
+
+~~~sh
+npm run db:admin
+npm run db:auth:check
+~~~
+
+이 명령은 ACTIVE ADMIN을 생성할 뿐 인증 세션은 만들지 않습니다. 이후 동일 이메일로 로그인 링크를 요청하고 수신한 링크로 인증합니다. 이미 ACTIVE ADMIN이 있으면 명령은 거부되므로 기존 관리자의 사용자 관리/초대 기능을 사용합니다. 동일 이메일의 기존 INVITED/DISABLED row와 충돌해도 임의 승격하거나 삭제하지 않습니다. 기존 상태/관리자를 확인해야 합니다. 환경변수 설정만으로 관리자가 생기지 않으며 명령 실행이 필요합니다.
+
+5. 최초 로그인 후 광고주/사용자/Membership을 기존 관리자 화면에서 준비합니다. INITIAL_ADMIN_EMAIL/AUTH_DIAGNOSTIC_EMAIL은 일회성 확인 후 환경변수에서 제거해도 됩니다. 임의 이메일 자동 ADMIN 생성, 개발 seed, db push/reset은 사용하지 않습니다. migration이 이미 성공했다면 초기 사용자 생성을 위해 다시 migration할 필요는 없습니다.
+
+### 안전한 로그 해석
+
+브라우저 네트워크 응답의 X-Request-ID와 서버 로그 requestId를 맞춰 확인합니다. requestId는 로그인 요청과 이메일 callback 각각 생성되며 두 요청은 서로 다른 ID입니다. 사용자 화면에는 기존 일반 실패 안내만 표시합니다.
+
+| 로그 | 의미 |
+| --- | --- |
+| auth.signin.started | POST 로그인 요청 도착 |
+| auth.user.lookup.started/completed | Adapter 이메일 사용자 조회 |
+| auth.user.policy.lookup.started/completed | 상태/초대 조회 |
+| auth.user.allowed / auth.user.denied | reason으로 허용/차단 원인 확인 |
+| auth.email.send.started | Resend fetch 직전. 외부 서버의 수신을 보장하지 않음 |
+| auth.email.send.completed / failed | 발송 요청 성공/실패. 실패 시 HTTP status(있을 때만) |
+| auth.token.create.started/completed | VerificationToken 저장. 발송과 병렬이므로 발송 실패에도 row가 생길 수 있음 |
+| auth.callback.started, auth.token.consume.*, auth.session.create.* | 링크 검증과 DB Session 생성 |
+| auth.user.activate.*, auth.signin.completed | 사용자 활성화/초대 처리 완료 |
+| auth.operation.failed / auth.failed | authStage, category, causeName, 허용된 databaseCode, requestId |
+
+category/causeName/databaseCode는 고정 허용 목록만 기록합니다. 원본 Error message/stack/cause 객체, Resend 응답 본문, 요청 본문/헤더, 이메일과 링크는 기록하지 않습니다. P1001은 DB 접근 문제, P2021/P2022는 테이블/컬럼 불일치 확인 단서입니다. AccessDenied + user.policy + user_not_registered이면 최초 관리자/초대 준비 문제입니다. email.send.failed가 있으면 제공자 HTTP 상태 또는 네트워크 오류 분류를 확인합니다. rate limit/Origin 등의 거부는 auth.request.failed의 request.guard와 status로 확인합니다.
+
+추가로 Auth.js가 반환한 읽기 전용 redirect 응답에 Request ID를 직접 쓰던 오류를 인증 Route 내부의 응답 복사로 수정했습니다. 만료/재사용 링크는 정상 오류 페이지로 이동하며 인증을 우회하지 않습니다.
+
+
+### 이번 수정의 검증 범위
+
+- npm test: 59/59 통과. 임시 SQLite DB에서 migration → 빈 DB 진단 → 기존 db:admin → ACTIVE ADMIN 확인 → 중복 생성 거부를 검증했습니다.
+- 기존 브라우저 회귀 55개 통과. 새 재사용 링크 테스트에서 찾은 redirect 헤더 오류를 수정했고, 테스트의 기존 세션 영향을 제거한 뒤 최종 Auth/Security/Foundation/Login UX 20/20을 통과했습니다(새 이메일 진단 테스트 2개 포함).
+- ACTIVE/미등록/유효·만료·없는 INVITED/DISABLED, 잘못된 이메일, 메일 제공자 성공·실패, VerificationToken 해시·생성·소비, DB Session, 링크 재사용 거부, ADMIN/ADVERTISER 진입, CSRF·Rate Limit·Tenant Isolation을 검증했습니다.
+- npm run lint, npm run typecheck, 최종 npm run build 성공.
+- 메일 제공자는 테스트용 로컬 캡처로 대체했습니다. 실제 Resend 전송, 실제 빈 PostgreSQL DB 및 Cloudtype DB 사용자 상태는 검증하지 않았습니다. Staging에서는 위 db:auth:check와 실제 이메일 로그인을 별도로 확인해야 합니다.
+
+변경 파일: auth.ts, app/api/auth/[...nextauth]/route.ts, lib/auth-diagnostics.ts(신규), lib/server/auth-trace.ts(신규), lib/server/email.ts, lib/server/logger.ts, lib/server/request-context.ts, scripts/diagnose-auth.ts(신규), package.json, Dockerfile, tests/auth-diagnostics.test.ts(신규), tests/browser/auth-diagnostics.spec.ts(신규), CLOUDTYPE_DEPLOYMENT.md. 기존 최초 관리자 명령/Prisma schema·migration/업무 UI/권한 정책 파일은 변경하지 않았습니다.

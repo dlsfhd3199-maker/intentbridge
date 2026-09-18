@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx scripts/seed.ts",
     "db:admin": "tsx scripts/create-admin.ts",
+    "db:auth:check": "tsx scripts/diagnose-auth.ts",
     "db:generate:pg": "prisma generate --schema prisma/postgresql/schema.prisma",
     "db:migrate:pg": "prisma migrate deploy --schema prisma/postgresql/schema.prisma",
     "db:dev": "prisma migrate dev",
