@@ -4,7 +4,7 @@ import {hashPassword} from "../../lib/password";
 const db=new PrismaClient({datasourceUrl:"file:./browser-test.db"});
 test("미인증 페이지·API는 거부되고 위조한 Mock Role 쿠키도 무시한다",async({page})=>{
  await page.context().clearCookies();await page.context().addCookies([{name:"intentbridge-qa-role",value:"super_admin",domain:"localhost",path:"/"}]);
- for(const route of ["/","/campaigns","/operations","/settings","/reports"]){await page.goto(route);await expect(page).toHaveURL(/\/login/)}
+ for(const route of ["/dashboard","/campaigns","/operations","/settings","/reports"]){await page.goto(route);await expect(page).toHaveURL(/\/login/)}
  for(const route of ["/api/bootstrap","/api/admin/users","/api/admin/audit","/api/workspaces/brand-a","/api/ga4?advertiser=brand-a"]){expect((await page.request.get(route)).status()).toBe(401)}
 });
 for(const [email,own,other,otherName]of [["a@intentbridge.test","brand-a","brand-b","브랜드 B"],["b@intentbridge.test","brand-b","brand-a","브랜드 A"]])test(`${own}: 페이지·Campaign·Simulation·Reports·GA4에서 상대 Workspace IDOR 차단`,async({page})=>{
@@ -31,10 +31,10 @@ test("승인·사용자 연결·비활성화·마지막 관리자 보호는 서�
  const headers={Origin:"http://localhost:3100"};const email=`invite-${Date.now()}@intentbridge.test`;
  const user=await db.user.create({data:{email,name:"검수 사용자",role:"ADVERTISER",status:"PENDING",passwordHash:await hashPassword(process.env.TEST_LOGIN_PASSWORD!)}});
  expect((await page.request.patch("/api/admin/users",{headers,data:{id:user.id,action:"approve",advertiserId:"brand-a"}})).status()).toBe(200);
- await page.waitForLoadState("networkidle");const adminCookies=await page.context().cookies();await loginAs(page,email);expect((await db.user.findUnique({where:{id:user.id}}))?.status).toBe("ACTIVE");await page.waitForLoadState("networkidle");const inviteCookies=await page.context().cookies();await page.context().clearCookies();await page.context().addCookies(adminCookies);await page.goto("/");await page.waitForLoadState("networkidle");
+ await page.waitForLoadState("networkidle");const adminCookies=await page.context().cookies();await loginAs(page,email);expect((await db.user.findUnique({where:{id:user.id}}))?.status).toBe("ACTIVE");await page.waitForLoadState("networkidle");const inviteCookies=await page.context().cookies();await page.context().clearCookies();await page.context().addCookies(adminCookies);await page.goto("/dashboard");await page.waitForLoadState("networkidle");
  expect((await page.request.patch("/api/admin/users",{headers,data:{id:user.id,name:user.name,role:"ADVERTISER",status:"DISABLED",advertiserIds:["brand-b"]}})).status()).toBe(200);
  expect((await page.request.patch("/api/admin/users",{headers,data:{id:"dev-admin",name:"Admin",role:"ADVERTISER",status:"ACTIVE",advertiserIds:["brand-a"]}})).status()).toBe(409);
- await page.context().clearCookies();await page.context().addCookies(inviteCookies);expect((await page.request.get("/api/bootstrap")).status()).toBe(401);await page.goto("/");await expect(page).toHaveURL(/\/login/);
+ await page.context().clearCookies();await page.context().addCookies(inviteCookies);expect((await page.request.get("/api/bootstrap")).status()).toBe(401);await page.goto("/dashboard");await expect(page).toHaveURL(/\/login/);
  await db.user.delete({where:{id:user.id}});
 });
 test("만료 세션은 DB에서 확인하며 보호 페이지로 재진입할 수 없다",async({page})=>{

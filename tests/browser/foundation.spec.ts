@@ -18,7 +18,7 @@ test("Health는 최소 정보, Readiness는 ADMIN 전용이며 초기 Bootstrap�
  await loginAs(page,"a@intentbridge.test");expect((await page.request.get("/api/admin/readiness")).status()).toBe(403);expect((await page.request.get("/api/workspace-documents?advertiser=brand-b")).status()).toBe(403);expect((await page.request.get("/api/workspace-summary?advertiser=brand-b")).status()).toBe(403);
 });
 test("동일 Email 로그인 요청은 서버에서 429 제한하며 Request ID를 반환한다",async({page})=>{
- const csrf=await(await page.request.get("/api/auth/csrf")).json();let last;for(let i=0;i<6;i++)last=await page.request.post("/api/auth/callback/credentials",{headers:{...headers,"X-Auth-Return-Redirect":"1"},form:{email:"not-invited-rate-test@example.invalid",csrfToken:csrf.csrfToken,callbackUrl:"http://localhost:3100/"},maxRedirects:0});expect(last!.status()).toBe(429);expect(last!.headers()["x-request-id"]).toBeTruthy();expect(await last!.text()).not.toContain("not-invited-rate-test");
+ const csrf=await(await page.request.get("/api/auth/csrf")).json();let last;for(let i=0;i<6;i++)last=await page.request.post("/api/auth/callback/credentials",{headers:{...headers,"X-Auth-Return-Redirect":"1"},form:{email:"not-invited-rate-test@example.invalid",csrfToken:csrf.csrfToken,callbackUrl:"http://localhost:3100/dashboard"},maxRedirects:0});expect(last!.status()).toBe(429);expect(last!.headers()["x-request-id"]).toBeTruthy();expect(await last!.text()).not.toContain("not-invited-rate-test");
 });
 
 test("Resend 장애에도 Credentials 로그인 가능하며 DISABLED 사용자는 차단된다",async({page})=>{

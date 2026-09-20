@@ -8,7 +8,7 @@ import {canAccessRoute} from "./lib/route-permissions";
 import {NextResponse} from "next/server";
 // Reject before streaming starts, so denial is a real HTTP 403, including RSC requests.
 export const proxy=auth(async request=>{
- const nonce=randomBytes(18).toString("base64"),csp=contentSecurityPolicy(nonce,process.env.NODE_ENV==="development"),headers=new Headers(request.headers);headers.set("x-nonce",nonce);headers.set("Content-Security-Policy",csp);const next=()=>{const response=NextResponse.next({request:{headers}});response.headers.set("Content-Security-Policy",csp);return response};if(request.nextUrl.pathname==="/login")return next();
+ const nonce=randomBytes(18).toString("base64"),csp=contentSecurityPolicy(nonce,process.env.NODE_ENV==="development"),headers=new Headers(request.headers);headers.set("x-nonce",nonce);headers.set("Content-Security-Policy",csp);const next=()=>{const response=NextResponse.next({request:{headers}});response.headers.set("Content-Security-Policy",csp);return response};if(["/","/login","/signup"].includes(request.nextUrl.pathname))return next();
  const id=request.auth?.user?.id;
  const user=id?await db.user.findUnique({where:{id},include:{members:{include:{advertiser:true}}}}):null;
  if(!user||user.status!=="ACTIVE"||!roleFromDatabase(user.role))return NextResponse.redirect(new URL("/login",request.url));
@@ -22,4 +22,4 @@ export const proxy=auth(async request=>{
  if(denied)return new NextResponse(deniedHtml,{status:403,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
  return next();
 });
-export const config={matcher:["/login","/","/funnel/:path*","/performance/:path*","/campaigns/:path*","/operations/:path*","/reports/:path*","/connections/:path*","/advertisers/:path*","/settings/:path*"]};
+export const config={matcher:["/login","/signup","/","/dashboard/:path*","/funnel/:path*","/performance/:path*","/campaigns/:path*","/operations/:path*","/reports/:path*","/connections/:path*","/advertisers/:path*","/settings/:path*"]};

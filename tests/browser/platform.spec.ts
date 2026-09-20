@@ -18,7 +18,7 @@ test('새 Workspace: 빈 상태 → 프로필 → 실제 담당자 → 데모 �
  const name='Platform '+crypto.randomUUID();let id='',manager='';
  try{
   const response=await page.request.post('/api/admin/advertisers',{headers,data:{name,industry:'쇼핑',productName:'데모 상품'}});expect(response.status()).toBe(200);id=(await response.json()).id;
-  await page.goto('/?advertiser='+id);await expect(page.getByRole('heading',{name:'IntentBridge 설정을 완료해주세요.'})).toBeVisible();
+  await page.goto('/dashboard?advertiser='+id);await expect(page.getByRole('heading',{name:'IntentBridge 설정을 완료해주세요.'})).toBeVisible();
   await page.goto('/connections?advertiser='+id);
   await page.getByLabel('사이트 URL',{exact:true}).fill('https://demo.example.com');await page.getByLabel('월 광고예산 (원)',{exact:true}).fill('3000000');await page.getByRole('button',{name:'프로필 저장',exact:true}).click();
   await expect.poll(async()=>(await(await page.request.get(`/api/workspaces/${id}/platform`)).json()).document.profile.monthlyBudget).toBe(3000000);
@@ -27,7 +27,7 @@ test('새 Workspace: 빈 상태 → 프로필 → 실제 담당자 → 데모 �
   await wizard(page);await expect(page.locator('#platform-data')).not.toContainText('구매0');
   const ready=await(await page.request.get(`/api/workspaces/${id}/platform`)).json();expect(ready.hasData).toBe(true);expect(ready.document.connections.ga4.state).toBe('healthy');
   await page.getByRole('button',{name:'데이터 확인 완료로 표시',exact:true}).click();await expect(page.getByRole('button',{name:'운영 시작',exact:true})).toBeEnabled();await page.getByRole('button',{name:'운영 시작',exact:true}).click();
-  await expect(page).toHaveURL(new RegExp('/\\?advertiser='+id));await expect(page.locator('.platform-source').filter({hasText:'운영 정상'})).toBeVisible();
+  await expect(page).toHaveURL(new RegExp('/dashboard\\?advertiser='+id));await expect(page.locator('.platform-source').filter({hasText:'운영 정상'})).toBeVisible();
   expect((await(await page.request.get(`/api/workspaces/${id}/platform`)).json()).document.started).toBe(true);
  }finally{if(manager)await db.user.deleteMany({where:{id:manager}});if(id)await db.advertiser.deleteMany({where:{id}});}
 });
@@ -64,6 +64,6 @@ test('검색·최근 광고주·알림 읽음·보고서 기간·회사 표시 �
 test('Platform 반응형 1440/1366/1024/768/390 · 외부 API 요청 없음',async({page})=>{
  const errors:string[]=[],external:string[]=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(new URL(r.url()).origin!=='http://localhost:3100')external.push(r.url());});
  for(const width of [1440,1366,1024,768,390]){await page.setViewportSize({width,height:900});await page.goto('/connections');await expect(page.locator('.platform-connectors article')).toHaveCount(7);await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`test-results/platform-${width}.png`,fullPage:true});}
- await loginAs(page,'a@intentbridge.test');for(const route of ['/','/funnel','/performance','/campaigns','/reports']){await page.goto(route);await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
+ await loginAs(page,'a@intentbridge.test');for(const route of ['/dashboard','/funnel','/performance','/campaigns','/reports']){await page.goto(route);await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
  expect(errors).toEqual([]);expect(external).toEqual([]);
 });
