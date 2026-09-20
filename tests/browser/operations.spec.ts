@@ -93,6 +93,9 @@ test("Named Simulation 저장·비교·복제·삭제·Performance 재열기·Ca
   await page.getByLabel("성과 예측 이름",{exact:true}).fill("Aggressive Plan");
   await page.getByRole("button",{name:"Library에 저장",exact:true}).click();
   await page.getByRole("link",{name:"성과 예측 Library 열기 →",exact:true}).click();
+  // Saving and client-side navigation finish independently; reload only after Operations opens.
+  await expect(page).toHaveURL(/\/operations(?:\?|$)/);
+  await expect(page.getByRole("heading",{name:"성과 예측 Library",exact:true})).toBeVisible();
   await saved(page);await page.reload();
   await page.getByRole("checkbox",{name:"Recommended Plan 비교",exact:true}).check();
   await page.getByRole("checkbox",{name:"Aggressive Plan 비교",exact:true}).check();
