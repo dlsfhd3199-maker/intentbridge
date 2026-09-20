@@ -63,8 +63,11 @@ test("여러 Draft 열기·복제·삭제, Campaign 비교와 JSON/CSV/HTML 다�
   await page.getByRole("button",{name:"초안 저장",exact:true}).click();
   const library=page.locator("section").filter({has:page.getByRole("heading",{name:"Campaign Drafts",exact:true})});
   await expect(library.locator("tbody tr")).toHaveCount(2);
+  // Complete the existing autosave command before the next library mutation.
+  await saved(page);
   await library.locator("tr").filter({hasText:"Checkout 초안"}).getByRole("button",{name:"복제",exact:true}).click();
   await expect(library.locator("tbody tr")).toHaveCount(3);
+  await saved(page);
   await library.locator("tr").filter({hasText:"Checkout 초안 복사"}).getByRole("button",{name:"삭제",exact:true}).click();
   await expect(library.locator("tbody tr")).toHaveCount(2);
   await library.locator("tr").filter({hasText:"Checkout 초안"}).getByRole("button",{name:"열기",exact:true}).click();

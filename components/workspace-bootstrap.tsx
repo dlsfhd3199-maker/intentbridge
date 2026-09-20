@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
-import {AdvertiserManagement,UserManagement} from "@/features/admin/management";
+import {UserManagement} from "@/features/admin/management";
+import {AdvertiserManagement} from "@/features/admin/advertiser-management";
 import {signOut} from "next-auth/react";
 import {SessionMonitor} from "./session-monitor";
 import {AppShell} from "./app-shell";

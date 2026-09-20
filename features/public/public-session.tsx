@@ -7,8 +7,11 @@ export function PublicSession({children}:{children:React.ReactNode}){
  useEffect(()=>{const controller=new AbortController();fetch('/api/auth/session',{cache:'no-store',signal:controller.signal}).then(r=>r.ok?r.json():null).then(s=>setSignedIn(!!s?.user?.id)).catch(()=>{});return()=>controller.abort();},[]);
  return <SessionContext.Provider value={signedIn}>{children}</SessionContext.Provider>;
 }
-export function EntryLink({short=false,secondary=false}:{short?:boolean;secondary?:boolean}){
+// A future demo workspace can replace this target without changing session handling.
+export const publicEntryTargets={experience:'#product',workspace:'/dashboard',login:'/login'};
+export function EntryLink({secondary=false}:{secondary?:boolean}){
  const signedIn=useContext(SessionContext);
- if(signedIn&&secondary)return null;
- return <a className={secondary?'pw-login':'pw-button'} href={signedIn?'/dashboard':secondary?'/login':'/signup'}>{signedIn?'대시보드로 이동':secondary?'로그인':short?'시작하기':'IntentBridge 시작하기'}{!secondary&&<span aria-hidden="true"> ↗</span>}</a>;
+ const href=secondary?(signedIn?publicEntryTargets.experience:publicEntryTargets.login):(signedIn?publicEntryTargets.workspace:publicEntryTargets.experience);
+ const label=secondary?(signedIn?'제품 살펴보기':'로그인'):(signedIn?'내 Workspace 열기':'제품 체험하기');
+ return <a className={secondary?'pw-login':'pw-button'} href={href}>{label}{!secondary&&<span aria-hidden="true"> ↗</span>}</a>;
 }

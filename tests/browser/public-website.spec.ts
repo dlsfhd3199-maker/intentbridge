@@ -20,13 +20,13 @@ test('비로그인 홈페이지: SEO·앵커·키보드·CTA·공개 요청 범�
  expect(await page.locator('a[href^="#"]').evaluateAll(links=>links.filter(a=>!document.getElementById(a.getAttribute('href')!.slice(1))).map(a=>a.getAttribute('href')))).toEqual([]);
  await page.keyboard.press('Tab');await expect(page.getByRole('link',{name:'본문으로 이동'})).toBeFocused();
  await page.keyboard.press('Enter');await expect(page).toHaveURL(/#public-main$/);
- await page.getByRole('link',{name:'제품 살펴보기'}).click();await expect(page).toHaveURL(/#product$/);
+ await page.locator('.pw-hero').getByRole('link',{name:'제품 체험하기'}).click();await expect(page).toHaveURL(/#product$/);
  expect(requests.filter(u=>new URL(u).origin!=='http://localhost:3100')).toEqual([]);
  expect(requests.filter(u=>u.includes('/api/')&&!u.includes('/api/auth/session'))).toEqual([]);
- expect(errors).toEqual([]);
+ expect(errors).toEqual([]);await expect(page.locator('#public-main>section')).toHaveCount(5);await expect(page.locator('.pw-role-flow,.pw-agency')).toHaveCount(0);await expect(page.locator('.pw-team')).toContainText('브랜드 · 인하우스 마케팅팀 · 퍼포먼스 마케터 · 광고 운영팀 · 에이전시');
  await page.locator('.pw-header-actions').getByRole('link',{name:'로그인',exact:true}).click();await expect(page).toHaveURL(/\/login$/);await expect(page.getByRole('heading',{name:'로그인',exact:true})).toBeVisible();
  await page.getByRole('link',{name:'IntentBridge 홈페이지'}).click();
- await page.locator('.pw-header-actions').getByRole('link',{name:'시작하기'}).click();await expect(page).toHaveURL(/\/signup$/);await expect(page.getByRole('heading',{name:'회원가입',exact:true})).toBeVisible();
+ await page.locator('.pw-header-actions').getByRole('link',{name:'제품 체험하기'}).click();await expect(page).toHaveURL(/#product$/);await page.locator('.pw-footer').getByRole('link',{name:'회원가입'}).click();await expect(page).toHaveURL(/\/signup$/);await expect(page.getByRole('heading',{name:'회원가입',exact:true})).toBeVisible();
  await page.goto('/dashboard');await expect(page).toHaveURL(/\/login$/);
 });
 
@@ -50,7 +50,7 @@ test('Public 반응형 1440/1366/1024/768/390 · 미리보기 · 초기 JS 크�
   expect(lowContrast).toEqual([]);
   await page.screenshot({path:`test-results/public-${width}.png`,fullPage:true});
  }
- await page.getByText('메뉴',{exact:true}).click();await page.getByRole('navigation',{name:'모바일 제품 소개'}).getByRole('link',{name:'주요 기능'}).click();await expect(page).toHaveURL(/#features$/);
+ await page.getByText('메뉴',{exact:true}).click();await page.getByRole('navigation',{name:'모바일 제품 소개'}).getByRole('link',{name:'활용 방식'}).click();await expect(page).toHaveURL(/#audience$/);
  const sizes=()=>page.evaluate(()=>performance.getEntriesByType('resource').filter(e=>new URL(e.name).pathname.endsWith('.js')).map(e=>({file:new URL(e.name).pathname,decodedBytes:(e as PerformanceResourceTiming).decodedBodySize})));
  await page.goto('/');await page.waitForLoadState('networkidle');const homepage=await sizes();
  await loginAs(page);await page.waitForLoadState('networkidle');const dashboard=await sizes();
@@ -67,8 +67,8 @@ test('로그인한 모든 역할: Public 유지 → Dashboard · Membership 격�
   for(const user of ['admin@intentbridge.test',email,'a@intentbridge.test']){
    await loginAs(page,user);await page.goto('/');await expect(page).toHaveURL('http://localhost:3100/');
    await page.setViewportSize({width:390,height:900});await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-   const entry=page.locator('.pw-header-actions .pw-button');await expect(entry).toHaveText(/대시보드로 이동/);
-   await expect(page.locator('.platform-toolbar')).toHaveCount(0);await entry.click();await expect(page).toHaveURL(/\/dashboard$/);
+   const entry=page.locator('.pw-header-actions .pw-button');await expect(entry).toHaveText(/내 Workspace 열기/);
+   await expect(page.locator('.pw-hero').getByRole('link',{name:'제품 살펴보기'})).toHaveAttribute('href','#product');await expect(page.locator('.platform-toolbar')).toHaveCount(0);await entry.click();await expect(page).toHaveURL(/\/dashboard$/);
    if(user!=='admin@intentbridge.test'){expect((await page.request.get('/api/workspaces/brand-b')).status()).toBe(403);expect((await page.goto('/dashboard?advertiser=brand-b'))?.status()).toBe(403);}
   }
  }finally{await db.user.delete({where:{id:manager.id}});}
