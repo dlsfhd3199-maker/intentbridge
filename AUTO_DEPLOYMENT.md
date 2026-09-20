@@ -87,9 +87,7 @@ Codex 수정 → 로컬 검증 → 검토한 파일 commit/push → main의 Poli
 
 ## Codex 작업과 수동 복구
 
-`git status --short`, `git diff` → 위험 분류/관련 테스트 → TypeScript/Lint/Unit/배포 테스트/build → 검토한 파일만 git add → git diff --cached → commit → 승인된 범위의 push → Actions 결과 확인. 무관한 파일/Secret은 commit하지 않습니다. HIGH는 push 전 별도 검토합니다.
-
-Commit prefix: feat:, fix:, ui:, refactor:, chore:. Product UI 변경 예: `ui: improve advertiser dashboard`.
+Codex의 작업 시작, Risk 분류, Secret 검사, 사용자 변경 보호, 검증, commit/push 및 완료 보고 규칙은 루트 [AGENTS.md](AGENTS.md)를 단일 기준으로 사용합니다. LOW/MEDIUM은 해당 조건 충족 시 반복 승인 없이 commit/push하며 HIGH는 사용자 명시적 승인 전 push하지 않습니다. 기존 Actions의 보수적인 경로 판정도 유지합니다. 배포 설정/복구 절차는 이 문서를 따릅니다.
 
 설정 후 같은 main SHA로 Actions Run workflow를 실행하고 reviewed_sha에 해당 SHA를 지정합니다. Secret 누락이면 Cloudtype main의 Secret 이름과 기존 값 일치를 확인합니다. 품질 실패는 코드를 수정하며 검사 생략으로 우회하지 않습니다. Health 실패는 Cloudtype 빌드/실행 로그·공개 지문·포트/주소를 확인합니다.
 
@@ -103,4 +101,4 @@ Private 저장소는 기존 SSH Deploy Key와 Actions 권한으로 배포합니�
 - [Cloudtype 환경변수](https://docs.cloudtype.dev/ko/developers/env): 배포환경별 Secret 및 YAML의 secret 속성.
 - [Cloudtype GitHub Actions](https://docs.cloudtype.dev/ko/developers/githubactions): 서비스 설정 전달 및 리소스 미지정 시 대시보드 쿼터 유지.
 
-이번 작업에서는 실제 Cloudtype 배포, GitHub push, Secret 조회/변경, PostgreSQL 변경을 실행하지 않습니다. 실제 Secret 해석과 기존 서비스 업데이트 성공은 최초 설정 후 배포에서 확인해야 합니다.
+사용자가 GitHub → Cloudtype Staging 실제 배포 성공을 확인했습니다. 향후 각 변경의 배포 상태는 해당 SHA의 Actions 결과로 별도 확인합니다. Git 운영 지침 최초 작성 작업에서는 사용자 요청에 따라 commit/push 및 실제 배포를 수행하지 않습니다.
