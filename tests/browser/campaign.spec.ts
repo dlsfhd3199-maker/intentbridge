@@ -84,7 +84,7 @@ test("손상된 저장소와 저장 차단에서도 Mock 편집과 생성이 가
 test("Funnel과 Performance 추천 및 저장된 성과 예측을 전달한다", async ({page}) => {
   await page.goto("/funnel");
   await page.getByRole("group",{name:"미구매 세그먼트 선택"}).getByRole("button").nth(1).click();
-  await page.getByRole("button",{name:"Campaign 만들기",exact:true}).click();
+  await page.getByRole("button",{name:"재공략 캠페인 만들기",exact:true}).click();
   await expect(page.getByRole("combobox",{name:"세그먼트",exact:true})).toHaveValue("cart-14d");
   await expect(page.locator(".cs-origin")).toContainText("Funnel Workspace");
   await page.getByRole("link",{name:/성과 개선 Performance/}).click();

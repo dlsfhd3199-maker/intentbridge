@@ -2,7 +2,7 @@ import type { Period, Advertiser } from "./domain";
 import type { CampaignStore } from "./campaign";
 import type { OperationsStore, SavedSimulation } from "./operations";
 import type { ScenarioSelection, SimulationLevers } from "./simulation";
-export interface AppSettings { defaultPeriod:Period; currency:"KRW"; locale:"ko-KR"; targetRoas:number; targetCpa:number; forecastScenario:"conservative"|"recommended"|"aggressive"; density:"compact"|"comfortable" }
+export interface AppSettings { companyName?:string; logoText?:string; timezone?:"Asia/Seoul"; defaultPeriod:Period; currency:"KRW"; locale:"ko-KR"; targetRoas:number; targetCpa:number; forecastScenario:"conservative"|"recommended"|"aggressive"; density:"compact"|"comfortable" }
 export type ConnectionStatus="MOCK CONNECTED"|"NOT CONNECTED"|"READY FOR API"|"COMING SOON"|"REQUIRES SETUP";
 export interface ReadinessItem { id:string; label:string; weight:number; ready:boolean; evidence:string }
 export interface ConnectionDefinition { id:string; name:string; category:string; purpose:string; status:ConnectionStatus; permission:string; lastSync:string; credentials:string[]; permissions:string[]; data:string[]; usedBy:string[]; checklist:ReadinessItem[]; notes:string }

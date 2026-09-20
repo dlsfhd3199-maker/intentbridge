@@ -1,4 +1,5 @@
 "use client";
+import {PlatformToolbar} from "@/features/platform/platform-toolbar";
 import {WorkspaceDataGate} from "./workspace-data-gate";
 import {signOut} from "next-auth/react";
 import {flushServerStorage} from "@/lib/server-storage";
@@ -78,7 +79,7 @@ function Shell({ children, advertisers, initialData }: { children: React.ReactNo
       <div className="main-shell">
         <main id="main" className="main-content">
           <header className="context-header"><div><span className="eyebrow">INTENTBRIDGE</span><h1>{current?.name??"접근 안내"}</h1><p className="ui-page-description">{pageDescriptions[pathname]}</p></div><div className="advertiser-control"><label htmlFor="advertiser">광고주 워크스페이스</label>{selectable?<select id="advertiser" value={scopeId} onChange={event=>selectWorkspace(event.target.value,period)}>{advertisers.map(item=><option key={item.id} value={item.id}>{item.name} · {item.productName}</option>)}</select>:<strong className="workspace-lock">{advertisers.find(a=>a.id===scopeId)?.name} · 내 워크스페이스 <LockKeyhole size={14}/></strong>}</div><div className="period-control"><span>조회 기간</span><div className="period-buttons" role="group" aria-label="조회 기간">{([7,14,30] as const).map(days=><button key={days} aria-pressed={period===days} onClick={()=>selectWorkspace(scopeId,days)} className={period===days?"selected":""}>{days}일</button>)}</div></div></header>
-          <div className="brand-context"><b>{advertisers.find(a=>a.id===scopeId)?.name}</b><span>{advertisers.find(a=>a.id===scopeId)?.productName}</span></div>
+          <PlatformToolbar advertisers={advertisers} id={scopeId} period={period} select={selectWorkspace}/><div className="brand-context"><b>{advertisers.find(a=>a.id===scopeId)?.name}</b><span>{advertisers.find(a=>a.id===scopeId)?.productName}</span></div>
           <div aria-live="polite" className="sr-only">{loading ? "데이터 불러오는 중" : `${data.advertiser.name}, ${data.period}일 데이터 표시`}</div>
           {!ready?<p>화면 준비 중…</p>:!canAccessRoute(user,pathname)||deniedWorkspace?<AccessDenied workspace={deniedWorkspace}/>:error?<div role="alert" className="error-panel">{error}</div>:!admin&&(data.advertiser.id!==scopeId||data.period!==period)?<p>데이터 불러오는 중…</p>:<div aria-busy={loading}><GA4Provider key={user.role} query={{advertiserId:data.advertiser.id,period:data.period}}><WorkspaceDataGate advertiserId={data.advertiser.id}>{children}</WorkspaceDataGate></GA4Provider></div>}
           <footer className="page-footer"><span>IntentBridge <span className="muted">/</span> 관심에서 구매까지, 하나의 흐름으로.</span><span>{data.period}일 조회 · IntentBridge</span></footer>

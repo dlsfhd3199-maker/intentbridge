@@ -1,4 +1,6 @@
 "use client";
+import {EmptyWorkspace} from "@/features/platform/empty-workspace";
+import {WorkspacePlatform} from "@/features/platform/workspace-platform";
 import {useState} from "react";
 import {WorkspaceDataGate} from "@/components/workspace-data-gate";
 import {useUserRole} from "@/context/user-role-context";
@@ -32,4 +34,6 @@ function MockOverview() {
 }
 
 function SelectedWorkspaceDetail(){const {mode}=useGA4(),data=useDashboard(),[open,setOpen]=useState(false);return <details className="ux-admin-detail" onToggle={e=>setOpen(e.currentTarget.open)}><summary>선택한 광고주 상세 성과 보기</summary>{open&&<WorkspaceDataGate advertiserId={data.advertiser.id} forceWorkspace>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</WorkspaceDataGate>}</details>}
-export function Overview(){const {user}=useUserRole();if(user.role==="manager")return <><AdminDashboard assigned/><SelectedWorkspaceDetail/></>;if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard/>;return <><AdminDashboard/><SelectedWorkspaceDetail/></>;}
+function WorkspaceOverview(){const {user}=useUserRole();if(user.role==="manager")return <><WorkspacePlatform compact/><AdminDashboard assigned/><SelectedWorkspaceDetail/></>;if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <><WorkspacePlatform compact/><AdvertiserDashboard/></>;return <><WorkspacePlatform compact/><AdminDashboard/><SelectedWorkspaceDetail/></>;}
+
+export function Overview(){return <EmptyWorkspace><WorkspaceOverview/></EmptyWorkspace>;}

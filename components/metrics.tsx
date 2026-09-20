@@ -9,5 +9,5 @@ export function Metrics({ data }: { data: DashboardData }) {
     { label: "구매당 비용", en: "CPA", value: won(data.totals.cpa), note: "광고비 ÷ 전체 구매" },
     { label: "광고 수익률", en: "ROAS", value: percent(data.totals.roas), note: "매출 ÷ 광고비 × 100", accent: true },
   ];
-  return <section className="metrics-grid" aria-label="핵심 성과 지표">{metrics.map(metric => <article className={`metric ${metric.accent ? "metric-accent" : ""}`} key={metric.en}><span>{metric.label}</span><small>{metric.en}</small><div className="metric-value">{metric.value}<em>{metric.unit}</em></div><p>{metric.note}</p></article>)}</section>;
+  return <section title="데이터 출처: 구매·매출 = GA4 데모 집계 / 광고비 = AI 유입 + Meta 데모 비용" className="metrics-grid" aria-label="핵심 성과 지표">{metrics.map(metric => <article className={`metric ${metric.accent ? "metric-accent" : ""}`} key={metric.en}><span>{metric.label}</span><small>{metric.en}</small><div className="metric-value">{metric.value}<em>{metric.unit}</em></div><p>{metric.note}</p></article>)}</section>;
 }

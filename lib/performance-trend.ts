@@ -16,10 +16,21 @@ export function detectTrend(rows:DailyMetric[]):TrendDetection {
   return {status,roasDayChange,cpaThreeDayChange,frequency:last.frequency,reasons:[roasDayChange===null?"ROAS 전일 비교 산출 불가":`ROAS 전일 대비 ${roasDayChange.toFixed(1)}%`,cpaThreeDayChange===null?"CPA 최근 3일 비교 산출 불가":`CPA 직전 3일 유효값 평균 대비 ${cpaThreeDayChange.toFixed(1)}%`,`Frequency ${last.frequency.toFixed(1)} · 일별 값은 합성 Mock입니다.`]};
 }
 export async function loadPerformanceTrend(advertiserId:string,period:Period,campaignId?:string):Promise<PerformanceTrend>{
-  let totals:PerformanceTrend["totals"],scope:string,frequency:number;
-  if(campaignId){const c=readCampaignStore(advertiserId).campaigns.find(c=>c.id===campaignId);if(!c)throw new Error("캠페인을 찾을 수 없습니다.");const m=monitorCampaign(c,period);totals={spend:m.spend,traffic:m.clicks,purchases:m.purchases,revenue:m.revenue};scope=c.name+" · Mock 클릭 유입";frequency=m.frequency;}
-  else{const d=await getDashboard({advertiserId,period});totals={spend:d.totals.spend,traffic:d.source.uniqueUsers,purchases:d.totals.purchases,revenue:d.totals.revenue};scope=d.advertiser.name+" · 전체 Mock 유입";frequency=2.2;}
-  const seed=`${advertiserId}:${campaignId??"all"}:${period}`,spend=allocateTotal(totals.spend,weights(seed+"spend",period)),traffic=allocateTotal(totals.traffic,weights(seed+"traffic",period)),purchases=allocateTotal(totals.purchases,weights(seed+"purchase",period)),revenue=allocateTotal(totals.revenue,purchases),freq=weights(seed+"frequency",period);
-  const rows=Array.from({length:period},(_,i)=>{const date=new Date(mockTrendEndDate+"T00:00:00Z");date.setUTCDate(date.getUTCDate()-period+1+i);const f=calculateFinancialMetrics(purchases[i],revenue[i],spend[i]);return {date:date.toISOString().slice(0,10),spend:spend[i],traffic:traffic[i],purchases:purchases[i],revenue:revenue[i],cpa:f.cpa,roas:f.roas,frequency:frequency?Math.round(frequency*freq[i]*10)/10:0};});
-  return {rows,detection:detectTrend(rows),scope,period,totals};
+  const periods=[7,14,30] as const;
+  const campaign=campaignId?readCampaignStore(advertiserId).campaigns.find(c=>c.id===campaignId):undefined;
+  if(campaignId&&!campaign)throw new Error("캠페인을 찾을 수 없습니다.");
+  const snapshots=await Promise.all(periods.map(async days=>{
+    if(campaign){const m=monitorCampaign(campaign,days);return {totals:{spend:m.spend,traffic:m.clicks,purchases:m.purchases,revenue:m.revenue},scope:campaign.name+" · Mock 클릭 유입",frequency:m.frequency};}
+    const d=await getDashboard({advertiserId,period:days});return {totals:{spend:d.totals.spend,traffic:d.source.uniqueUsers,purchases:d.totals.purchases,revenue:d.totals.revenue},scope:d.advertiser.name+" · 전체 Mock 유입",frequency:2.2};
+  }));
+  const chosen=snapshots[periods.indexOf(period)],seed=advertiserId+":"+(campaignId??"all");
+  // One nested 30-day dataset: shorter periods are exact suffixes while existing engine totals stay unchanged.
+  const distribute=(key:keyof PerformanceTrend["totals"])=>[
+    ...allocateTotal(snapshots[2].totals[key]-snapshots[1].totals[key],weights(seed+key+"early",16)),
+    ...allocateTotal(snapshots[1].totals[key]-snapshots[0].totals[key],weights(seed+key+"middle",7)),
+    ...allocateTotal(snapshots[0].totals[key],weights(seed+key+"recent",7))
+  ];
+  const spend=distribute("spend"),traffic=distribute("traffic"),purchases=distribute("purchases"),revenue=[...allocateTotal(snapshots[2].totals.revenue-snapshots[1].totals.revenue,purchases.slice(0,16)),...allocateTotal(snapshots[1].totals.revenue-snapshots[0].totals.revenue,purchases.slice(16,23)),...allocateTotal(snapshots[0].totals.revenue,purchases.slice(23))],freq=weights(seed+"frequency",30);
+  const rows=Array.from({length:30},(_,i)=>{const date=new Date(mockTrendEndDate+"T00:00:00Z");date.setUTCDate(date.getUTCDate()-29+i);const f=calculateFinancialMetrics(purchases[i],revenue[i],spend[i]);return {date:date.toISOString().slice(0,10),spend:spend[i],traffic:traffic[i],purchases:purchases[i],revenue:revenue[i],cpa:f.cpa,roas:f.roas,frequency:snapshots[2].frequency?Math.round(snapshots[2].frequency*freq[i]*10)/10:0};}).slice(-period);
+  return {rows,detection:detectTrend(rows),scope:chosen.scope,period,totals:chosen.totals};
 }
