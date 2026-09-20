@@ -32,7 +32,7 @@ test('비로그인 홈페이지: SEO·앵커·키보드·CTA·공개 요청 범�
 
 test('Public 반응형 1440/1366/1024/768/390 · 미리보기 · 초기 JS 크기',async({page},testInfo)=>{
  await page.goto('about:blank');await page.context().clearCookies();
- for(const width of [1440,1366,1024,768,390]){
+ for(const width of [1920,1440,1366,1024,768,390]){
   await page.setViewportSize({width,height:900});await page.goto('/');
   await expect(page.locator('.pw-hero .pw-button')).toBeVisible();
   await expect(page.locator('.pw-journey footer')).toContainText('총 구매 94건');
