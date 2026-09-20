@@ -1,11 +1,14 @@
 "use client";
-import { useState } from "react";
+import {useSearchParams} from "next/navigation";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight, Info } from "lucide-react";
 import type { FunnelWorkspaceData, StageId } from "@/types/funnel";
 import { number, percent } from "@/lib/format";
 
 export function JourneyPanel({ data }: { data: FunnelWorkspaceData }) {
   const [selected, setSelected] = useState<StageId>(data.bottleneck?.id ?? "Visit");
+  const params=useSearchParams(),signalStage=params.get("signalStage");
+  useEffect(()=>{if(params.get("advertiser")===data.advertiser.id&&Number(params.get("period"))===data.query.period&&data.stages.some(s=>s.id===signalStage))setSelected(signalStage as StageId)},[signalStage,params,data]);
   const largestLoss=data.stages.reduce((largest,item)=>item.dropOff>largest.dropOff?item:largest,data.stages[0]);
   const stage = data.stages.find(item => item.id === selected)!;
   return <section className="fw-journey" aria-label="고객 여정 퍼널"><div className="fw-section-heading"><div><span className="fw-overline">CUSTOMER JOURNEY</span><h2>고객의 다음 행동을 연결하세요</h2></div><span className="fw-badge dark">MOCK RULE</span></div>

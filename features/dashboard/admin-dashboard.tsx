@@ -1,10 +1,11 @@
 "use client";
+import {DecisionFeed} from "@/features/decision/decision-feed";
 import {useEffect,useState} from "react";
 import Link from "next/link";
 import {useDashboard} from "@/components/app-shell";
 import {loadAdminSummary,loadAssignedSummary,type WorkspaceSummary} from "@/lib/workspace-summary";
 import {number,percent} from "@/lib/format";
-import {ActionQueue,DataSourceBadge,DataTable,EmptyState,Money,SectionHeader,StatusBadge,TrendChart,WorkspaceSkeleton} from "@/components/product-ui";
+import {DataSourceBadge,DataTable,EmptyState,Money,SectionHeader,StatusBadge,TrendChart,WorkspaceSkeleton} from "@/components/product-ui";
 import {ConnectionStatus} from "./connection-status";
 import {useUserRole} from "@/context/user-role-context";
 import {can} from "@/lib/permissions";
@@ -23,9 +24,9 @@ export function AdminDashboard({management=false,assigned=false}:{management?:bo
  return <div className="ux-workspace ui-dashboard ds-dashboard" data-testid={assigned?"manager-dashboard":"admin-dashboard"}>
  <header className="ds-daily" id="assigned-workspaces"><div><p>{new Date().toLocaleDateString("ko-KR",{month:"long",day:"numeric"})} · <span className="ux-kpis ds-workspace-count"><span>{assigned?"담당 광고주":"전체 광고주"}</span><strong>{rows.length}</strong></span></p><h2>오늘 확인해야 할 흐름 <span>{ranked.length}</span></h2><p>{management?"광고주 워크스페이스 관리":assigned?"내 담당 광고주 운영 현황":"전체 광고 운영 현황"}</p></div><DataSourceBadge/></header>
  <div className="ds-dashboard-layout"><div className="ds-dashboard-main">
- <section className="ds-priority"><SectionHeader title={assigned?"오늘의 Action Queue":"지금 확인할 광고주"} description="운영 경고를 먼저, 고객 여정 개선 기회를 다음으로 정렬합니다."/>{rows.length?<ActionQueue items={ranked.slice(0,5).map(r=>({id:r.dashboard.advertiser.id,title:r.dashboard.advertiser.name,description:r.reason,status:r.attention?"WATCH":"HEALTHY",href:`/${r.attention?"operations":"funnel"}?advertiser=${r.dashboard.advertiser.id}&period=${period}`,action:r.attention?"광고 운영 보기":"광고주 보기"}))}/>:<EmptyState title="아직 확인할 흐름이 없습니다." description="데이터 연결과 광고주 배정이 완료되면 고객 이탈과 개선 기회를 확인할 수 있습니다." href="/connections" action="데이터 연결"/>}</section>
+ <DecisionFeed advertiserIds={rows.map(r=>r.dashboard.advertiser.id)} period={period} perAdvertiser/>
  {ranked[0]&&<JourneySignal summary={ranked[0]}/>}
- <section className="ds-summary"><h2>기간 성과</h2><dl className="ds-data-strip ux-kpis"><div><dt>광고비</dt><dd><Money value={sums.spend}/></dd></div><div><dt>구매</dt><dd>{number(sums.purchases)}건</dd></div><div><dt>매출</dt><dd><Money value={sums.revenue}/></dd></div><div><dt>ROAS</dt><dd>{sums.spend?percent(sums.revenue/sums.spend*100):"—"}</dd></div></dl><p className="ds-scope">광고주 {rows.length} · 운영 캠페인 {total("active")} · 확인 필요 {total("attention")} · 검토 대기 {total("pending")}</p><p className="ui-period-note">선택한 {period}일 · 전기 대비 데이터 미제공 · 추이는 Mock 기간 합계를 배분한 예시입니다.</p></section>
+ <section className="ds-summary"><h2>기간 성과</h2><dl className="ds-data-strip ux-kpis"><div><dt>광고비</dt><dd><Money value={sums.spend}/></dd></div><div><dt>구매</dt><dd>{number(sums.purchases)}건</dd></div><div><dt>매출</dt><dd><Money value={sums.revenue}/></dd></div><div><dt>ROAS</dt><dd>{sums.spend?percent(sums.revenue/sums.spend*100):"—"}</dd></div></dl><p className="ds-scope">광고주 {rows.length} · 운영 캠페인 {total("active")} · 확인 필요 {total("attention")} · 검토 대기 {total("pending")}</p><p className="ui-period-note">선택한 {period}일 · 실측 전기 이력 미제공 · 운영 신호는 합성 비교 이력, 추이는 Mock 합계 배분 예시입니다.</p></section>
   <section><SectionHeader title={assigned?"내 광고주 Performance":"전체 광고주 Performance"} description="광고비·구매·매출은 기존 Mock 집계 기준입니다."/><DataTable label="광고주 성과"><thead><tr>{["광고주","광고비","구매","매출","CPA","ROAS","상태"].map(t=><th key={t}>{t}</th>)}</tr></thead><tbody>{rows.map(r=><tr key={r.dashboard.advertiser.id}><th><Link href={`/funnel?advertiser=${r.dashboard.advertiser.id}&period=${period}`}>{r.dashboard.advertiser.name}</Link>{management&&<ConnectionStatus advertiserId={r.dashboard.advertiser.id}/>}</th><td><Money value={r.dashboard.totals.spend}/></td><td>{number(r.dashboard.totals.purchases)}건</td><td><Money value={r.dashboard.totals.revenue}/></td><td>{r.dashboard.totals.purchases?<Money value={r.dashboard.totals.cpa}/>:"—"}</td><td>{r.dashboard.totals.spend?percent(r.dashboard.totals.roas):"—"}</td><td><StatusBadge status={r.attention?"WATCH":"HEALTHY"}/>{management&&<Link className="ui-text-link" href={`/connections?advertiser=${r.dashboard.advertiser.id}&period=${period}`}>연결 상태</Link>}</td></tr>)}</tbody></DataTable></section>
 
  {chosen&&<TrendChart title={`${chosen.dashboard.advertiser.name} · 구매 추이`} description="MOCK DATA · 기간 합계를 배분한 예시 추이" rows={chosen.trend.map(r=>({date:r.date,value:r.purchases}))}/>}

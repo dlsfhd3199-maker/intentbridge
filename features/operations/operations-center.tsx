@@ -1,4 +1,5 @@
 "use client";
+import {DecisionFeed} from "@/features/decision/decision-feed";
 import {StatusBadge} from "@/components/product-ui";
 import {atomicStoreChange} from "@/lib/server-storage";
 import Link from "next/link";
@@ -43,7 +44,7 @@ function OperationsView({data,refresh,revision}:{data:OperationsWorkspace;refres
   const rows=data.campaigns.filter(r=>filter==="ALL"||r.campaign.status===filter||r.health===filter);
   const pending=data.recommendations.filter(r=>r.status==="PENDING");
   let deferredNotice="";const run=async(fn:()=>void|Promise<unknown>)=>{if(busy)return;setBusy(true);try{await atomicStoreChange(fn);if(deferredNotice)setNotice(deferredNotice);refresh();}catch(e){setNotice((e as Error).message);}finally{setBusy(false);}};
-  return <div className="op"><section className="op-hero"><span>DEMO ACTION</span><h2>{pending.length}건의 운영 제안을 확인해 주세요.</h2><p>현재 모든 자동 운영은 Mock 성과 예측이며 실제 광고계정에는 반영되지 않습니다.</p></section>
+  return <div className="op"><DecisionFeed advertiserIds={[data.advertiserId]} period={data.period} all title="운영 신호와 검토 상태"/><section className="op-hero"><span>DEMO ACTION</span><h2>{pending.length}건의 운영 제안을 확인해 주세요.</h2><p>현재 모든 자동 운영은 Mock 성과 예측이며 실제 광고계정에는 반영되지 않습니다.</p></section>
     <div className="op-summary"><div><span>운영 캠페인</span><strong>{data.campaigns.filter(r=>r.campaign.status==="MOCK ACTIVE").length}</strong></div><div><span>조치 필요</span><strong>{data.campaigns.filter(r=>r.health==="ACTION REQUIRED").length}</strong></div><div><span>검토 대기 제안</span><strong>{pending.length}</strong></div><div><span>현재 분석 범위</span><strong>{data.period}<small>일</small></strong></div></div>
     <div className="op-notice" role="status">{notice||"명시적으로 Mock 적용을 누른 경우에만 로컬 상태가 변경됩니다."}</div>
     <section><div className="op-heading"><div><span className="op-eyebrow">01 / RECOMMENDATION QUEUE</span><h2>오늘의 운영 액션</h2></div><span className="op-badge">MOCK AUTOMATION</span></div>{!pending.length&&<p className="op-empty">현재 조건에 맞는 새 액션이 없습니다. 캠페인을 만들고 아래에서 운영 규칙을 설정하세요.</p>}<div className="op-queue">{pending.map(r=><article key={r.id}><div><span className="op-badge">PRIORITY {r.priority}</span><h3>{r.campaignName}</h3><b>{r.rule.action.type} {r.rule.action.value ? `${r.rule.action.value}${r.rule.action.type==="Window Change"?"D":"%"}` : ""}</b><p>{r.reason}</p><small>Source · {r.rule.name}</small></div><div className="op-actions"><button onClick={()=>setReview(review===r.id?"":r.id)}>검토</button><button className="op-primary" disabled={busy||!r.preview.allowed} onClick={()=>run(async()=>{await applyOperation(data.advertiserId,r,data.period);deferredNotice="APPLIED IN MOCK · 변경 이력과 새 버전을 저장했습니다.";})}>Mock 적용</button><button disabled={busy} onClick={()=>run(()=>{ignoreOperation(data.advertiserId,r.id);deferredNotice="운영 액션을 무시했습니다.";})}>무시</button></div>{review===r.id&&<Preview p={r.preview}/>}</article>)}</div></section>
