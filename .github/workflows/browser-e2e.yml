@@ -1,0 +1,24 @@
+name: Browser E2E (manual)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GA4_DATA_MODE: mock
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:ui

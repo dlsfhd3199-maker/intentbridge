@@ -89,7 +89,7 @@ test("Named Simulation 저장·비교·복제·삭제·Performance 재열기·Ca
   await page.getByRole("button",{name:/추천 Recommended/}).click();
   await page.getByLabel("성과 예측 이름",{exact:true}).fill("Recommended Plan");
   await page.getByRole("button",{name:"Library에 저장",exact:true}).click();
-  await page.getByRole("button",{name:/공격적 Aggressive/}).click();
+  await page.getByRole("button",{name:/적극적 Aggressive/}).click();
   await page.getByLabel("성과 예측 이름",{exact:true}).fill("Aggressive Plan");
   await page.getByRole("button",{name:"Library에 저장",exact:true}).click();
   await page.getByRole("link",{name:"성과 예측 Library 열기 →",exact:true}).click();

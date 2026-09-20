@@ -1,4 +1,6 @@
 "use client";
+import {useState} from "react";
+import {WorkspaceDataGate} from "@/components/workspace-data-gate";
 import {useUserRole} from "@/context/user-role-context";
 import {can} from "@/lib/permissions";
 import {AdvertiserDashboard} from "@/features/dashboard/advertiser-dashboard";
@@ -29,4 +31,5 @@ function MockOverview() {
   </div>;
 }
 
-export function Overview(){const {user}=useUserRole(),{mode}=useGA4();if(user.role==="manager")return <><AdminDashboard assigned/><details className="ux-admin-detail"><summary>선택한 광고주 상세 성과 보기</summary>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</details></>;if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard/>;return <><AdminDashboard/><details className="ux-admin-detail"><summary>선택한 광고주 상세 성과 보기</summary>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</details></>;}
+function SelectedWorkspaceDetail(){const {mode}=useGA4(),data=useDashboard(),[open,setOpen]=useState(false);return <details className="ux-admin-detail" onToggle={e=>setOpen(e.currentTarget.open)}><summary>선택한 광고주 상세 성과 보기</summary>{open&&<WorkspaceDataGate advertiserId={data.advertiser.id} forceWorkspace>{mode==="real"?<GA4AnalyticsView page="overview"/>:<MockOverview/>}</WorkspaceDataGate>}</details>}
+export function Overview(){const {user}=useUserRole();if(user.role==="manager")return <><AdminDashboard assigned/><SelectedWorkspaceDetail/></>;if(!can(user.role,"VIEW_ALL_ADVERTISERS"))return <AdvertiserDashboard/>;return <><AdminDashboard/><SelectedWorkspaceDetail/></>;}

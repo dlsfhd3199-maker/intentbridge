@@ -9,8 +9,10 @@ test("광고주·기간 전환과 Workspace 이동", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "대시보드", exact: true })).toBeVisible();
   await page.getByText("선택한 광고주 상세 성과 보기",{exact:true}).click();await expect(page.getByLabel("핵심 성과 지표")).toContainText("₩13,690,000");
   await page.getByLabel("광고주 워크스페이스").selectOption("brand-b");
+  await page.locator(".ux-admin-detail:not([open]) > summary").click();
   await expect(page.getByLabel("핵심 성과 지표")).toContainText("₩9,450,000");
   await page.getByRole("button", { name: "7일", exact: true }).click();
+  await page.locator(".ux-admin-detail:not([open]) > summary").click();
   await expect(page.getByLabel("핵심 성과 지표")).toContainText("₩2,268,000");
   await page.getByRole("navigation", { name: "주 메뉴" }).getByRole("link", { name: /고객 여정/ }).click();
   await expect(page).toHaveURL(/\/funnel$/);

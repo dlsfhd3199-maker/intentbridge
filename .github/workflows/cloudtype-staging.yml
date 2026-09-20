@@ -1,0 +1,129 @@
+name: Cloudtype Staging
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: 'HIGH risk only: full main SHA reviewed; DB migration already prepared manually'
+        type: string
+        required: false
+
+permissions:
+  contents: read
+concurrency:
+  group: cloudtype-staging
+  cancel-in-progress: false
+
+jobs:
+  policy:
+    name: Deployment policy
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.policy.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve last healthy deployment
+        id: baseline
+        env:
+          INITIAL_BASELINE: ${{ vars.STAGING_BASELINE_SHA }}
+        run: |
+          baseline=$(git rev-parse --verify refs/tags/staging-deployed 2>/dev/null || true)
+          echo "sha=${baseline:-$INITIAL_BASELINE}" >> "$GITHUB_OUTPUT"
+      - name: Detect migration and sensitive changes
+        id: policy
+        env:
+          BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          MANUAL_RUN: ${{ github.event_name == 'workflow_dispatch' }}
+        run: node scripts/deployment-policy.mjs
+
+  quality:
+    name: Quality Gate and Build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GA4_DATA_MODE: mock
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - name: TypeScript Check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Deployment safety tests
+        run: node --test tests/deployment.test.mjs
+      - name: Unit Test
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy and Health
+    needs: [policy, quality]
+    if: needs.policy.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: staging
+    permissions:
+      contents: write # Only update the last healthy deployment tag after health succeeds.
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare existing service configuration
+        id: config
+        env:
+          SERVICE_JSON: ${{ vars.CLOUDTYPE_SERVICE_JSON }}
+          CLOUDTYPE_PROJECT: ${{ vars.CLOUDTYPE_PROJECT }}
+          CLOUDTYPE_STAGE: ${{ vars.CLOUDTYPE_STAGE }}
+          CLOUDTYPE_ENDPOINT: ${{ vars.CLOUDTYPE_ENDPOINT }}
+          CLOUDTYPE_TOKEN: ${{ secrets.CLOUDTYPE_TOKEN }}
+          STAGING_URL: ${{ vars.STAGING_URL }}
+        run: node scripts/deployment-config.mjs
+      - name: Deploy (official Cloudtype action)
+        uses: cloudtype-github-actions/deploy@43cf563907c5451c12ecc4461bdbf02e61528d1d # v1
+        with:
+          token: ${{ secrets.CLOUDTYPE_TOKEN }}
+          endpoint: ${{ vars.CLOUDTYPE_ENDPOINT }}
+          project: ${{ vars.CLOUDTYPE_PROJECT }}
+          stage: ${{ vars.CLOUDTYPE_STAGE }}
+          allstages: 'false'
+          file: .validation/cloudtype-staging.json
+      - name: Health (wait for expected build and HTTP 200)
+        env:
+          STAGING_URL: ${{ vars.STAGING_URL }}
+          EXPECTED_REVISION: ${{ steps.config.outputs.revision }}
+        run: node scripts/deployment-health.mjs
+      - name: Record last healthy deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const ref = 'tags/staging-deployed';
+            try {
+              await github.rest.git.getRef({...context.repo, ref});
+              await github.rest.git.updateRef({...context.repo, ref, sha: context.sha, force: true});
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.git.createRef({...context.repo, ref: `refs/${ref}`, sha: context.sha});
+            }
+            await core.summary.addHeading('Staging deployment healthy').addRaw(`Commit: ${context.sha}`).write();

@@ -1,3 +1,5 @@
+> **자동 배포:** GitHub Actions Quality Gate, Private 저장소 Deploy Key, migration 보호와 최초 설정은 [AUTO_DEPLOYMENT.md](AUTO_DEPLOYMENT.md)를 확인하세요.
+
 > **역할 확장 배포:** 기존 ADMIN을 SUPER_ADMIN으로 이전하는 순서와 명령은 [AGENCY_ROLE_MIGRATION.md](AGENCY_ROLE_MIGRATION.md)를 먼저 확인하세요.
 
 > **현재 인증 안내:** 이메일·비밀번호 회원가입과 관리자 승인 방식으로 전환했습니다. 아래 과거 Magic Link/필수 Resend/DB Session 안내보다 [AUTH_CREDENTIALS_MIGRATION.md](AUTH_CREDENTIALS_MIGRATION.md)가 우선합니다. 기존 계정은 비밀번호 초기 설정과 재로그인이 필요합니다.

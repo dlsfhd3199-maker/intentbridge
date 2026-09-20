@@ -40,5 +40,4 @@ spec
 README_START_HERE.txt
 playwright.config.ts
 eslint.config.mjs
-Dockerfile*
-.dockerignore
+# Keep Dockerfile and .dockerignore in the builder for deployment fingerprinting.

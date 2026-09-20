@@ -46,7 +46,7 @@ test("Campaign 편집·Forecast·저장·상세·복원·광고주 분리", asyn
   await page.getByRole("button",{name:"초안 저장",exact:true}).click();
   await expect(page.locator(".cs-list tbody tr")).toHaveCount(1);
   await create.click(); await expect(page.locator(".cs-list tbody tr")).toHaveCount(1);
-  await expect(page.locator(".cs-list tbody")).toContainText("READY");
+  await expect(page.locator(".cs-list tbody")).toContainText("준비 완료");
   await page.getByRole("button",{name:"브랜드 A 캠페인",exact:true}).click();
   await page.getByRole("button",{name:"Mock 활성화",exact:true}).click();
   await expect(page.getByRole("dialog")).toContainText("MOCK ACTIVE");
@@ -78,7 +78,7 @@ test("손상된 저장소와 저장 차단에서도 Mock 편집과 생성이 가
   await saved(page);await page.reload();
   await expect(page.locator(".server-save-status")).toContainText("서버 저장 완료");
   await page.getByRole("button",{name:"Mock 캠페인 생성",exact:true}).click();
-  await expect(page.locator(".cs-list tbody")).toContainText("READY");
+  await expect(page.locator(".cs-list tbody")).toContainText("준비 완료");
 });
 
 test("Funnel과 Performance 추천 및 저장된 성과 예측을 전달한다", async ({page}) => {
@@ -89,7 +89,7 @@ test("Funnel과 Performance 추천 및 저장된 성과 예측을 전달한다",
   await expect(page.locator(".cs-origin")).toContainText("Funnel Workspace");
   await page.getByRole("link",{name:/성과 개선 Performance/}).click();
   await page.getByRole("button",{name:"7일",exact:true}).click();
-  await page.getByRole("button",{name:/공격적 Aggressive/}).click();
+  await page.getByRole("button",{name:/적극적 Aggressive/}).click();
   await page.getByRole("button",{name:"30일",exact:true}).click();
   await page.getByRole("button",{name:/추천 Recommended/}).click();
   await page.getByRole("button",{name:"캠페인 만들기",exact:true}).first().click();

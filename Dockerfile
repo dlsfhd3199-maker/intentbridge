@@ -18,7 +18,8 @@ ENV NODE_ENV=production \
     APP_ENV=staging \
     GA4_DATA_MODE=mock
 # No DB access, migrations, seed, or authentication secrets during image build.
-RUN npm run db:generate:pg \
+RUN node scripts/deployment-fingerprint.mjs --write \
+    && npm run db:generate:pg \
     && npm run build \
     && mkdir -p public
 

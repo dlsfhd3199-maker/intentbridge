@@ -11,10 +11,11 @@ test("시나리오·6개 레버 경계·Reset·추천·What-if가 실시간으�
   await scenario.getByRole("button", { name: /추천/ }).click();
   await expect(result).toHaveText("124건");
   await expect(page.getByTestId("confidence")).toHaveText("MEDIUM");
-  await scenario.getByRole("button", { name: /공격적/ }).click();
+  await scenario.getByRole("button", { name: /적극적/ }).click();
   await expect(page.getByTestId("confidence")).toHaveText("LOW");
   await scenario.getByRole("button", { name: /보수적/ }).click();
   await expect(page.getByTestId("confidence")).toHaveText("HIGH");
+  await page.locator(".ui-advanced > summary").click();
   const sliders = page.getByRole("slider");
   await expect(sliders).toHaveCount(6);
   for (let index = 0; index < 6; index++) {
@@ -51,7 +52,7 @@ test("광고주·기간별 설정 및 Forecast는 이동·새로고침 후 유�
   await expect(page.getByTestId("projected-purchases")).toHaveText("124건");
   await page.getByLabel("광고주 워크스페이스").selectOption("brand-b");
   await expect(page.getByTestId("projected-purchases")).toHaveText("63건");
-  await page.getByRole("button", { name: /공격적 Aggressive/ }).click();
+  await page.getByRole("button", { name: /적극적 Aggressive/ }).click();
   const brandB = await page.getByTestId("projected-purchases").textContent();
   await page.getByLabel("광고주 워크스페이스").selectOption("brand-a");
   await expect(page.getByTestId("projected-purchases")).toHaveText("124건");
@@ -63,7 +64,7 @@ test("광고주·기간별 설정 및 Forecast는 이동·새로고침 후 유�
   await expect(page.getByTestId("projected-purchases")).toHaveText("124건");
   await page.getByLabel("광고주 워크스페이스").selectOption("brand-b");
   await expect(page.getByTestId("projected-purchases")).toHaveText(brandB!);
-  await expect(page.getByRole("button", { name: /공격적 Aggressive/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /적극적 Aggressive/ })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("Performance Lab은 좁은 화면에서도 조작과 결과 확인이 가능하다", async ({ page }) => {
