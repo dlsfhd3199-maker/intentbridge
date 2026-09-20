@@ -60,17 +60,30 @@ test('health fails for old revision, HTTP failure, malformed body and network fa
   await assert.rejects(checkHealth('http://staging.example.invalid', revision), /Invalid/);
 });
 
-test('service preparation preserves Cloudtype secret references and pins tested commit', () => {
-  const env = { CLOUDTYPE_TOKEN: 'fixture-only', CLOUDTYPE_PROJECT: 'space/intentbridge', CLOUDTYPE_STAGE: 'staging', CLOUDTYPE_ENDPOINT: 'https://app.example.invalid/api', STAGING_URL: 'https://staging.example.invalid', GITHUB_SHA: 'a'.repeat(40), GITHUB_REPOSITORY: 'dlsfhd3199-maker/intentbridge', SERVICE_JSON: JSON.stringify({ name: 'intentbridge', app: 'dockerfile', options: { ports: 3000, env: [{ name: 'APP_ENV', value: 'staging' }, { name: 'GA4_DATA_MODE', value: 'mock' }, { name: 'DATABASE_URL', value: 'IB_STAGING_DATABASE_URL' }, { name: 'AUTH_SECRET', value: 'IB_STAGING_AUTH_SECRET' }, { name: 'AUTH_URL', value: 'https://staging.example.invalid' }] } }) };
+test('minimal variables generate only the existing service with Cloudtype secret references', () => {
+  const env = { CLOUDTYPE_TOKEN: 'fixture-only', CLOUDTYPE_PROJECT: 'progressmedia/intentbridge', CLOUDTYPE_STAGE: 'main', STAGING_URL: 'https://staging.example.invalid', GITHUB_SHA: 'a'.repeat(40), GITHUB_REPOSITORY: 'dlsfhd3199-maker/intentbridge' };
   const config = prepare(env);
+  assert.equal(config.name, 'intentbridge');
+  assert.equal(config.app, 'dockerfile');
   assert.equal(config.context.git.ref, env.GITHUB_SHA);
   assert.equal(config.context.git.url, 'git@github.com:dlsfhd3199-maker/intentbridge.git');
-  assert.equal(config.options.ports, 3000);
-  assert.throws(() => prepare({ ...env, CLOUDTYPE_STAGE: 'production' }));
-  assert.throws(() => prepare({ ...env, SERVICE_JSON: env.SERVICE_JSON.replace('IB_STAGING_DATABASE_URL', 'postgresql://literal') }));
-  assert.throws(() => prepare({ ...env, SERVICE_JSON: env.SERVICE_JSON.replace('mock', 'live') }));
+  assert.equal(config.options.ports, '3000');
+  assert.equal(config.options.dockerfile, 'Dockerfile');
+  assert.equal(config.options.healthz, '/api/health');
+  const variables = new Map(config.options.env.map(item => [item.name, item]));
+  for (const name of ['DATABASE_URL', 'AUTH_SECRET', 'AUTH_URL', 'RESEND_API_KEY', 'AUTH_EMAIL_FROM', 'INITIAL_ADMIN_EMAIL', 'INITIAL_ADMIN_PASSWORD']) {
+    assert.deepEqual(variables.get(name), {name, secret: name});
+  }
+  assert.equal(variables.size, 12);
+  assert.equal(variables.get('APP_ENV').value, 'staging');
+  assert.equal(variables.get('GA4_DATA_MODE').value, 'mock');
+  assert.equal(variables.get('RATE_LIMIT_STORE').value, 'database');
+  assert.equal(JSON.stringify(config).includes(env.CLOUDTYPE_TOKEN), false);
+  assert.equal(Object.hasOwn(config, 'resources'), false);
+  for (const change of [{CLOUDTYPE_STAGE:'production'}, {CLOUDTYPE_STAGE:'staging'}, {CLOUDTYPE_PROJECT:'other/intentbridge'}, {CLOUDTYPE_TOKEN:''}, {STAGING_URL:'https://staging.example.invalid/api/health'}, {STAGING_URL:'http://staging.example.invalid'}, {STAGING_URL:'https://user:password@example.invalid'}, {GITHUB_SHA:'main'}]) assert.throws(() => prepare({...env, ...change}));
+  // Obsolete inputs and accidental runtime secrets are neither consumed nor copied.
+  assert.deepEqual(prepare({...env, SERVICE_JSON:'invalid', CLOUDTYPE_ENDPOINT:'invalid', DATABASE_URL:'must-not-copy', INITIAL_ADMIN_PASSWORD:'must-not-copy'}), config);
 });
-
 test('workflow YAML gates deployment, serializes runs, permits main/manual and does not run migrations', () => {
   const require = createRequire(import.meta.url);
   const yaml = require('yaml');
@@ -83,6 +96,11 @@ test('workflow YAML gates deployment, serializes runs, permits main/manual and d
   const commands = workflow.jobs.quality.steps.filter(s => s.run).map(s => s.run);
   assert.deepEqual(commands, ['npm ci', 'npm run db:generate', 'npm run typecheck', 'npm run lint', 'node --test tests/deployment.test.mjs', 'npm test', 'npm run build']);
   assert.equal(text.includes('continue-on-error'), false);
+  assert.equal(text.includes('CLOUDTYPE_ENDPOINT'), false);
+  assert.equal(text.includes('CLOUDTYPE_SERVICE_JSON'), false);
+  const deployAction = workflow.jobs.deploy.steps.find(step => step.name === 'Deploy (official Cloudtype action)');
+  assert.equal(Object.hasOwn(deployAction.with, 'endpoint'), false);
+  assert.equal(deployAction.with.allstages, 'false');
   assert.equal(/run:.*(?:migrate|db:seed|db:admin)/.test(text), false);
   assert.equal(workflow.jobs.deploy.steps.at(-1).name, 'Record last healthy deployment');
   assert.ok(Object.hasOwn(yaml.parse(readFileSync('.github/workflows/browser-e2e.yml', 'utf8')).on, 'workflow_dispatch'));

@@ -93,10 +93,8 @@ jobs:
       - name: Prepare existing service configuration
         id: config
         env:
-          SERVICE_JSON: ${{ vars.CLOUDTYPE_SERVICE_JSON }}
           CLOUDTYPE_PROJECT: ${{ vars.CLOUDTYPE_PROJECT }}
           CLOUDTYPE_STAGE: ${{ vars.CLOUDTYPE_STAGE }}
-          CLOUDTYPE_ENDPOINT: ${{ vars.CLOUDTYPE_ENDPOINT }}
           CLOUDTYPE_TOKEN: ${{ secrets.CLOUDTYPE_TOKEN }}
           STAGING_URL: ${{ vars.STAGING_URL }}
         run: node scripts/deployment-config.mjs
@@ -104,7 +102,6 @@ jobs:
         uses: cloudtype-github-actions/deploy@43cf563907c5451c12ecc4461bdbf02e61528d1d # v1
         with:
           token: ${{ secrets.CLOUDTYPE_TOKEN }}
-          endpoint: ${{ vars.CLOUDTYPE_ENDPOINT }}
           project: ${{ vars.CLOUDTYPE_PROJECT }}
           stage: ${{ vars.CLOUDTYPE_STAGE }}
           allstages: 'false'
