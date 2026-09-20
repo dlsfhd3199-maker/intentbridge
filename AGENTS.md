@@ -1,113 +1,82 @@
 # IntentBridge 개발 완료 및 Git 반영 규칙
 
-이 파일은 이 저장소에서 수행하는 Codex 작업에 적용한다. 사용자가 해당 작업에서 지정한 제한(예: commit/push 금지)을 우선한다. 별도 배포 시스템이나 예약 작업을 만들지 않고 기존 GitHub Actions → Cloudtype Staging Pipeline을 사용한다. 배포 설정과 복구 절차는 AUTO_DEPLOYMENT.md를 따른다.
+## 적용 단계: DEVELOPMENT / STAGING PHASE
 
-## 작업 시작
+현재 플랫폼 구동 데이터와 Mock/Demo 중심 개발에 적용한다. 사용자 작업별 제한을 우선한다. 기존 GitHub Actions → Cloudtype Staging Pipeline만 사용한다. 실제 GA4/광고 매체 데이터 저장 또는 실제 Campaign Write API를 도입하기 전에 Production 수준 정책으로 강화한다. 현재 DB에도 계정·권한·설정 데이터가 있으므로 무손실을 가정하거나 초기화하지 않는다.
 
-다음 명령으로 초기 상태를 기록한다.
+## 시작 및 변경 소유권
 
-```sh
-git status --short
-git branch --show-current
-git rev-parse HEAD
-```
+`git status --short`, `git branch --show-current`, `git rev-parse HEAD`로 시작 상태를 기록한다. 기존 staged/unstaged/untracked 변경을 구분하고 기존 diff를 먼저 확인한다. 사용자 변경을 덮어쓰거나 자신의 변경으로 간주하지 않는다. 안전하게 분리할 수 없으면 commit/push를 보류한다. `git reset --hard`, `git clean -fd`, 대량 checkout/restore는 명시적 요청 없이 금지한다.
 
-기존 staged/unstaged/untracked 파일과 작업 전 HEAD를 구분한다. 기존 변경을 덮어쓰거나 자신의 변경으로 간주하지 않는다. 사용자 작업과 같은 파일을 수정해야 하면 기존 diff를 먼저 확인하고 보존한다. 출처가 섞여 분리 검토할 수 없다면 자동 commit/push를 보류한다.
+## 배포 결정
 
-사용자 명시적 요청 없이 `git reset --hard`, `git clean -fd`, `git checkout -- .`, `git restore .` 및 동등한 대량 삭제/복원 명령을 사용하지 않는다. 기존 index도 임의로 비우거나 다시 stage하지 않는다.
+파일 경로만이 아니라 실제 diff의 의미를 검토한다. CI의 scripts/deployment-policy.mjs 결과와 이 지침 중 더 엄격한 결정을 따른다. 분류를 쪼개거나 검사를 완화하여 검토를 우회하지 않는다.
 
-## Risk Classification
+### AUTO
 
-파일명뿐 아니라 실제 diff의 의미와 영향으로 분류한다. 여러 등급이 섞이면 가장 높은 등급을 적용하며, HIGH를 작은 commit으로 분리해서 승인 없이 우회하지 않는다.
+UI/CSS/Layout/Responsive/Copy, Public Website·Public Route·일반 페이지, Dashboard/Journey/Performance/Campaign/Operations/Reports/Connections, Demo Connector·Dataset, Notification/Search/Onboarding, 일반 Component/Business Logic, 비파괴 Read API, 기존 보안 경계를 유지하는 Tenant-safe Create/Update·설정 저장 API, Export/Report, Mock/Demo 기능. `lib/**`, `app/api/**` 경로 자체는 수동 검토 사유가 아니다. LOW/MEDIUM은 참고 진단일 뿐 배포 결정은 AUTO다.
 
-| 등급 | 대상 | 완료 후 동작 |
-| --- | --- | --- |
-| LOW | UI/CSS/Typography/Responsive/Copy/Layout, Chart Presentation, Empty State, Icon, client presentation | 기본 검증 및 diff/Secret 검사 성공 후 별도 확인 없이 해당 작업 commit + push |
-| MEDIUM | 기존 business/read API logic, Simulation/Campaign 계산, data transformation, 일반 component logic | 관련 테스트 + 기본 검증 + diff/Secret 검사 성공 후 해당 작업 commit + push |
-| HIGH | DB/Prisma/migration, Auth.js/Credentials/password/session, Authorization/role/permission, SUPER_ADMIN/MANAGER/ADVERTISER 권한, membership/tenant isolation/admin approval, API write, Secret/env, security, destructive data operations, Dockerfile/.dockerignore, .github/workflows/**, scripts/deployment-*, Cloudtype 설정, 의존성/런타임 설정, AGENTS.md/Git 운영 규칙, AUTO_DEPLOYMENT.md 실행 설정 | 구현·검증·위험 보고까지. 자동 push 금지, 기본적으로 commit도 보류 |
+### MANUAL_REVIEW — 아래 5개 범주만
 
-Dashboard/Journey/Performance/Campaign/Operations/Reports의 표현만 바꾸고 Backend/API/Auth/DB에 영향을 주지 않는 변경은 LOW로 판단할 수 있다. UI 파일에 있는 권한 검사/쓰기 동작/민감 데이터 처리 변경은 HIGH다. 판단이 불명확하면 HIGH로 보고한다.
+1. **DESTRUCTIVE_DATABASE**: DROP/TRUNCATE/DELETE ALL, column/table 제거, 대량 UPDATE/DELETE, DB reset, 데이터 손실 가능성 또는 분석할 수 없는 migration/schema 변경.
+2. **AUTHENTICATION**: Auth.js 핵심 설정, Credentials, 비밀번호 해시, Session 생성/검증, 로그인/가입 보안, 인증 Guard 핵심 동작.
+3. **AUTHORIZATION_TENANT**: Role/Permission, Membership, Tenant Isolation, 광고주 접근 범위, 관리자 승인 권한.
+4. **SECRET_ENVIRONMENT**: 환경변수 구조, DB URL/인증 Secret/API Key 참조, Cloudtype Secret 전달 방식. 실제 credential commit은 아래 BLOCKED다.
+5. **DEPLOYMENT_INFRASTRUCTURE**: Workflow/Docker/Cloudtype/deployment scripts/CI 보안, 의존성·빌드·테스트 실행 설정, AGENTS.md/Git 정책 및 AUTO_DEPLOYMENT.md 실행 규칙.
 
-기존 scripts/deployment-policy.mjs도 확인한다. 현재 CI는 lib/**, app/api/** 등을 보수적으로 HIGH 처리하므로, 의미상 read-only/MEDIUM이어도 해당 경로 변경은 HIGH 검토 절차를 적용한다. UI가 features/**에 있어 CI가 MEDIUM으로 표시하는 것은 정상이다. 로컬 규칙과 CI 정책은 별개이며 정책을 완화하거나 우회하지 않는다. AGENTS.md나 문서 변경을 CI가 LOW로 판단하더라도 로컬 HIGH 규칙을 우선한다.
+Public Route 추가 자체는 AUTO. proxy/중앙 권한 구현 등에서 보호 정책을 바꾸면 수동 검토한다. 일반 API에 기존 requireAdvertiserAccess 등을 그대로 적용하는 것은 AUTO. 보안 경계 변경을 일반 업무 변경으로 분류하지 않는다. CI의 내용 검사에는 한계가 있어 개발자가 실제 접근 범위를 검토해야 한다.
 
-## 검증과 diff 검토
+MANUAL_REVIEW는 구현 → 검증 → 영향 보고까지 진행하고 **commit/push를 보류**한다. 해당 변경에 대한 사용자 명시적 승인 후 동일한 Git/Secret 검사를 거쳐 반영한다. 이번 정책 단순화 작업 자체도 MANUAL_REVIEW이며, 사용자 승인 없이 commit/push하지 않는다. 일반 운영 규칙 동의는 미래 민감 변경의 포괄 승인이 아니다.
 
-기존 package.json scripts를 사용한다. LOW/MEDIUM의 자동 반영 전, HIGH 작업의 검증에도 다음 기본 검사를 실행한다. 하나라도 실패하거나 실행할 수 없으면 PASS로 보고하거나 자동 push하지 않는다.
+### BLOCKED — 승인으로 해제 불가
 
-```sh
-npm run typecheck
-npm run lint
-npm test
-npm run build
-```
+실제 Secret/Private Key 및 미해결 Secret 후보, 필수 테스트·빌드·Tenant Isolation 검증 실패, 분석 실패 SQL에 명백한 destructive operation 포함, 잘못된 baseline/비조상 이력, 예상 저장소가 아닌 origin, 강제 push가 필요한 상황. 원인을 수정하고 재검증해야 한다. 미실행/확인 불가 검사는 PASS가 아니다.
 
-관련 테스트가 있으면 함께 실행한다. 배포 규칙/설정은 `node --test tests/deployment.test.mjs`, Workflow 변경은 actionlint, UI/권한 흐름은 필요 범위의 Playwright(`npm run test:ui`)로 확인한다. 운영 DB나 실제 매체 API를 테스트 대상으로 사용하지 않는다. 외부 시스템 검증이 필요한 작업은 별도 사용자 범위에 따른다.
+## Migration
 
-검증 후 `git status --short`, `git diff --stat`, `git diff` 및 staged diff를 검토한다. 새 파일도 검토하고 요청과 관계없는 변경을 제외한다. Secret 의심 파일은 먼저 아래 방식으로 검사하고 실제 값이 출력되는 diff를 도구 로그에 남기지 않는다. 검증 후 코드가 다시 바뀌면 관련 검증을 다시 수행한다.
+Detection을 유지한다. 새 migration SQL이 제한된 allowlist(새 table, nullable column, 일반 index)에 맞으면 NON_DESTRUCTIVE로 AUTO 가능하다. NOT NULL 추가, rename, 기존 migration 편집/삭제, 데이터 변경 및 분석 불가 구문은 수동 검토한다. SQL을 분석하지 못했으며 destructive operation도 포함하면 BLOCKED다. Auth/Role/Membership schema 변경은 additive여도 수동 검토한다. schema만 바꾸거나 SQL과의 정합성을 확인할 수 없으면 AUTO 금지.
 
-## Secret 및 산출물 검사
+**분류 AUTO는 DB 변경 실행 승인이 아니다.** 현재 pipeline은 staging migrate/seed/reset을 실행하지 않는다. additive schema를 사용하는 코드라도 배포 전 DB 호환성·SQL과 Prisma schema 정합성·적용 순서를 확인한다. 해당 migration 실행은 별도 승인 범위이며 기존 PostgreSQL migration 절차를 유지한다. 검증용 격리 로컬 DB는 기존 테스트 방식대로 사용한다. 운영 DB를 검증 대상으로 사용하지 않는다.
 
-자동 push 전 검토 대상은 작업 diff/새 파일뿐 아니라 **origin/main 이후 push될 모든 commit**과 최종 staged 내용이다. 최신 파일에서 지웠더라도 중간 commit에 있는 Secret은 차단한다.
+## 모든 AUTO의 필수 Gate
 
-- 파일명 검사: 실제 .env, credentials/secrets, private key/certificate, database dump/로컬 DB, node_modules, .next/out/build artifact, 테스트 산출물이 포함되지 않도록 한다. .env.example도 실제 값이 있으면 금지한다.
-- 내용 검사: 사용 가능한 Secret scanner의 redaction 모드를 우선 사용한다. scanner가 없다면 로컬 검사로 private-key header, 공급자 API/token 패턴, 비밀번호가 포함된 DB URL, AUTH_SECRET/API_KEY/TOKEN/PASSWORD 등의 literal 할당과 고엔트로피 문자열을 검사한다. 출력은 파일명·줄 번호·분류만 허용하며 일치 문자열은 출력하지 않는다.
-- 후보가 있으면 자동 반영을 중지하고, 환경변수/Cloudtype secret 참조인지 아니면 실제 credential인지 안전하게 확인한다. 이름이 일치한다는 이유로 참조를 Secret 실값으로 단정하지 않으며, 실제 credential은 절대 허용하지 않는다. 명백한 비작동 테스트 fixture/placeholder만 근거를 확인해 구분한다.
-- scanner 미탐지는 안전 보장이 아니다. diff 검토를 병행한다. 검사 불가, binary/의심 항목 미해결, 실제 Secret 발견 시 push하지 않는다. 발견 내용을 원문으로 보고하지 않는다. 이미 존재하던 이력을 임의 rewrite하지 않는다.
+- `npm run typecheck`
+- `npm run lint`
+- `npm test`
+- `node --test tests/deployment.test.mjs`
+- `npm run build`
+- `npm run test:ui` (전체 App/공개 화면/보안/Tenant Isolation 회귀; 격리 DB, Mock)
+- Secret Scan 및 실제 diff 검토
+- Workflow 변경 시 actionlint
 
-## Stage, commit, push
+하나라도 실패하면 BLOCKED, 배포 금지. 수정 후 영향받는 검증을 다시 실행한다. 테스트 삭제/무력화로 PASS를 만들지 않는다. CI에서도 전체 Browser/Tenant Isolation 테스트를 필수 실행한다.
 
-LOW/MEDIUM은 아래 조건을 모두 충족하면 사용자의 반복 승인을 요구하지 않고 commit/push까지 완료한다. 이는 향후 안전한 작업에 대한 사용자 사전 승인이다.
+## Secret 및 diff 검사
 
-1. 요청 범위의 작업과 검증 완료, HIGH 변경 없음, 사용자 push 금지 없음.
-2. 현재 branch가 main이며 origin의 fetch 및 모든 push URL이 정확히 dlsfhd3199-maker/intentbridge를 가리킨다. HTTPS/SSH 표기는 허용하지만 다른 호스트/저장소/추가 push 목적지는 금지한다. URL에 credential이 있다면 출력하지 않는다.
-3. `git fetch origin`으로 원격 상태를 갱신하고 `git rev-list --left-right --count origin/main...HEAD` 등으로 관계를 확인한다. 원격이 앞섰거나 분기되었으면 임의 pull/rebase/merge 없이 알리고 중지한다. 연결 실패로 최신 원격 상태를 확인할 수 없어도 자동 push를 보류한다.
-4. origin/main 이후 기존 미전송 commit도 확인한다. 자신의 승인된 작업 외 commit이 섞여 있거나 HIGH/Secret/소유권이 불명확하면 함께 push하지 않는다.
-5. `git add -- <검토한 파일...>`로 해당 작업만 stage한다. 무조건 `git add .`를 쓰지 않는다. 같은 파일의 기존 사용자 변경이 섞이면 안전하게 분리 가능한 자신의 hunk만 stage하며, 불가능하면 중지한다. 기존 staged 사용자 변경을 commit에 섞거나 임의 unstage하지 않는다.
-6. `git diff --cached --check`, `git diff --cached --stat`, 안전하게 검토한 staged diff로 실제 commit 내용을 확인하고 Secret 검사를 완료한다.
-7. commit prefix는 ui:, feat:, fix:, refactor:, chore:, docs:. 예: `ui: refine super admin dashboard`. commit 후 SHA와 내용을 확인한다.
-8. push 직전 branch/remote/outgoing commit을 다시 확인하고 `git push origin main`을 실행한다. 작업이 진행되는 동안 새 사용자 변경이 생기면 무조건 포함하지 말고 다시 검사한다.
+검토 대상은 작업 diff/새 파일, 최종 index, **origin/main 이후 전송될 모든 commit**이다. 중간 commit에서 추가 후 삭제한 Secret도 검사한다. 파일명으로 .env 실파일, credentials/secrets, key/certificate, DB dump/로컬 DB, node_modules, .next, 테스트 산출물이 포함되지 않게 한다. .env.example에도 실제 credential은 금지한다.
 
-push 실패 시 `git push --force`, `git push -f`, `--force-with-lease` 등 모든 강제 push를 금지한다. 원격 선행/보호 규칙/인증 오류를 설명하고 로컬 commit을 보존한다. 자동 merge/rebase로 해결하지 않는다.
+가능하면 redaction 지원 scanner를 사용한다. 최소한 scripts/deployment-secrets.mjs의 패턴/고엔트로피 검사와 수동 diff 검토를 수행한다. CI는 마지막 정상 배포부터 모든 도입 commit의 변경 파일을 검사한다. 출력에는 파일·줄·분류만 남기고 일치 값, password, token, DB URL을 출력하지 않는다. 참조/명백한 비작동 fixture와 실제 credential을 구분하되 미해결 후보는 BLOCKED다. 패턴 미탐지는 안전 보장이 아니다. 실제 Secret 노출을 approved SHA로 허용하거나 과거 이력을 임의 rewrite하지 않는다.
 
-## HIGH 및 migration 승인
+검증 후 `git diff --check`, `git diff --stat`, 안전하게 검토한 diff와 새 파일을 확인한다. Secret 의심 파일은 먼저 값이 출력되지 않는 검사를 수행한다.
 
-HIGH 작업은 수정과 검증 후 **"HIGH RISK 변경이므로 GitHub Push 전 검토가 필요합니다."**라고 알린다. 변경 파일/영향/검증 결과와 미확인 사항을 제시한다. 이번 일반 운영 규칙에 대한 동의는 미래 HIGH 변경의 승인이 아니다. 사용자가 해당 변경을 명시적으로 승인한 뒤에만 동일한 Git/Secret 검사를 거쳐 commit/push한다. 승인 후 범위가 바뀌면 다시 검토한다.
+## commit/push 절차
 
-새 migration은 파일/SQL, destructive 여부, 기존 데이터 영향, recovery/rollback 가능성, Staging DB 준비 여부를 확인하고 불확실성을 보고한다. 사용자 승인 전 push 금지. DB 작업 승인은 코드 push 승인과 별개다. 자동 migration/seed/reset을 실행하지 않는다.
+AUTO + 모든 Gate PASS이면 반복 승인 없이 수행한다. MANUAL_REVIEW는 그 변경에 대한 명시적 승인 후 수행한다.
 
-HIGH push 승인은 CI reviewed_sha 우회나 DB 준비 완료의 의미가 아니다. push 후 CI가 막으면 검토 대상의 **전체 40자 SHA**를 제공한다. 사용자가 수동 승인할 수 있도록 안내하며 workflow_dispatch의 reviewed_sha를 임의 제출하지 않는다.
+1. main인지 확인. origin fetch 및 모든 push URL이 정확히 GitHub `dlsfhd3199-maker/intentbridge`인지 검사한다. HTTPS/SSH 허용, 다른 저장소/추가 목적지/credential URL 금지.
+2. `git fetch origin` 및 `git rev-list --left-right --count origin/main...HEAD`로 원격 상태를 확인한다. 선행/분기/조회 실패면 중지한다. 임의 pull/rebase/merge 금지.
+3. 기존 미전송 commit도 소유권·승인·Secret을 확인한다. 승인되지 않은 변경을 함께 push하지 않는다.
+4. `git add -- <검토한 파일...>`로 해당 작업만 추가한다. `git add .` 금지. 기존 사용자 index를 임의로 비우거나 commit에 혼합하지 않는다.
+5. `git diff --cached --check`, `--stat`, staged diff와 staged Secret 검사를 완료한다.
+6. `ui:`, `feat:`, `fix:`, `refactor:`, `chore:`, `docs:` prefix로 commit하고 SHA/내용을 확인한다.
+7. push 직전 branch/remote/outgoing commit과 새 사용자 변경을 다시 확인한 후 `git push origin main`.
 
-## Push 후 Actions 및 완료 보고
+모든 force push 옵션 금지. 실패하면 원인과 로컬 commit 보존 상태를 알린다. 승인 여부와 관계없이 강제 전송으로 해결하지 않는다.
 
-push 성공 후 가능하면 GitHub CLI/연결 도구로 `.github/workflows/cloudtype-staging.yml`의 **push한 SHA와 일치하는 실행**을 찾고 Policy → Quality Gate → Deploy and Health 상태를 확인한다. 이전 실행의 성공을 현재 배포 성공으로 보고하지 않는다. 문서만 바뀌어 Deploy가 skip되거나 이전 미배포 HIGH 변경 때문에 막히는 경우 실제 상태대로 설명한다. 정책/baseline/마지막 정상 태그를 성공 표시 목적으로 수정하지 않는다.
+## CI 승인 및 완료 보고
 
-조회가 불가능하면 push 성공까지만 보고하고 사용자가 Actions를 확인해야 한다고 알린다. 실행 중이면 시작/진행 중, 실패면 실패라고 쓴다. Health 성공 전 배포 완료라고 말하지 않는다. 실행을 기다리는 동안 간결하게 상태를 알린다.
+MANUAL_REVIEW commit Push 승인은 CI 수동 승인이나 DB 준비 완료를 대신하지 않는다. CI는 `workflow_dispatch`의 `reviewed_sha`가 대상 main 전체 40자 SHA와 일치할 때만 수동 검토를 통과시킨다. Codex가 임의 제출하거나 SHA를 자동 채워 우회하지 않는다. BLOCKED 또는 Quality 실패는 reviewed_sha로 해제하지 못한다.
 
-일반 완료 보고:
+Push 후 해당 SHA의 Cloudtype Staging 실행을 확인하고 Policy → Quality → Deploy and Health 실제 결과를 보고한다. Health 성공 전 배포 완료라고 하지 않는다. 조회 불가/진행 중/실패/skip은 그대로 기록한다. STAGING_BASELINE_SHA나 마지막 정상 태그를 성공 표시를 위해 수정하지 않는다. Health 뒤에만 마지막 정상 배포를 기록하는 기존 workflow를 유지한다.
 
-```text
-작업 완료
-Risk: LOW 또는 MEDIUM
-Tests: PASS (실제 결과)
-Build: PASS (실제 결과)
-Commit: <short SHA>
-Push: main 완료
-Cloudtype: <해당 SHA의 실제 Actions 상태 또는 조회 불가>
-변경:
-- 핵심 변경
-```
-
-HIGH 완료 보고:
-
-```text
-작업 완료 / Push 대기
-Risk: HIGH
-Tests: <실제 결과>
-Build: <실제 결과>
-Push: 보류
-HIGH RISK 변경이므로 GitHub Push 전 검토가 필요합니다.
-검토 필요:
-- 변경 파일과 영향
-```
-
-이 규칙을 최초 작성하는 작업은 HIGH다. 지침 작성·검증·Git 상태 확인까지만 수행하고 commit/push하지 않는다. 이는 최초 작성 작업에만 적용하며 이후 승인된 LOW/MEDIUM 자동 반영을 금지하는 규칙이 아니다.
+완료 보고: Decision(AUTO/MANUAL_REVIEW/BLOCKED), 영향, Tests/Build 실제 결과, Commit 전체 SHA, Push, 해당 SHA의 Actions/Cloudtype 상태. 수동 검토면 'MANUAL_REVIEW 변경이므로 GitHub Push 전 검토가 필요합니다.'와 파일/영향/검증 결과를 보고한다. 사용자에게 필요한 reviewed_sha 전체 값을 제공한다. 실행/복구 상세는 AUTO_DEPLOYMENT.md를 따른다.

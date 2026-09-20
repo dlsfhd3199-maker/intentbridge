@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       reviewed_sha:
-        description: 'HIGH risk only: full main SHA reviewed; DB migration already prepared manually'
+        description: 'MANUAL_REVIEW only: full main SHA reviewed; any DB migration prepared separately'
         type: string
         required: false
 
@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deploy: ${{ steps.policy.outputs.deploy }}
+      decision: ${{ steps.policy.outputs.decision }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,7 +38,7 @@ jobs:
         run: |
           baseline=$(git rev-parse --verify refs/tags/staging-deployed 2>/dev/null || true)
           echo "sha=${baseline:-$INITIAL_BASELINE}" >> "$GITHUB_OUTPUT"
-      - name: Detect migration and sensitive changes
+      - name: Classify policy, analyze migrations and scan commit history for secrets
         id: policy
         env:
           BASELINE_SHA: ${{ steps.baseline.outputs.sha }}
@@ -73,6 +74,13 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser and Tenant Isolation regression (isolated local database)
+        run: npm run test:ui
+      - name: Mark failed quality as BLOCKED
+        if: failure()
+        run: echo 'Policy result BLOCKED — a required quality check failed; reviewed_sha cannot override.' >> "$GITHUB_STEP_SUMMARY"
 
   deploy:
     name: Deploy and Health

@@ -69,25 +69,48 @@ context:
 
 기존 Cloudtype 자체 push 자동 배포/webhook은 해제하여 품질 검사를 우회하지 않도록 합니다. 기존 SSH Deploy Key, GitHub staging Environment와 main 배포 제한을 유지합니다.
 
-## 실행과 안전장치
+## DEVELOPMENT / STAGING PHASE 정책
 
-Codex 수정 → 로컬 검증 → 검토한 파일 commit/push → main의 Policy 및 Quality Gate → 공식 Cloudtype Action → 기존 Dockerfile 빌드/서비스 업데이트 → Health → 마지막 정상 배포 태그 기록.
+실제 광고주 운영 데이터/GA4·매체 실측 저장 및 실제 Campaign Write 도입 전에 Production 정책으로 재검토합니다. PostgreSQL의 계정·승인·Membership·Workspace 데이터는 계속 보호합니다.
 
-- `.github/workflows/cloudtype-staging.yml`: main push + workflow_dispatch. 진행 중 배포 취소 없이 직렬화.
-- Quality: npm ci → Prisma generate → TypeScript → Lint → 배포 테스트 → Unit → npm run build. 하나라도 실패하면 Deploy 실행 금지.
-- LOW: UI/CSS/문구/차트/반응형. MEDIUM: 업무/캠페인/시뮬레이션 변경, 관련 테스트 필요.
-- HIGH: Prisma, 인증, 권한, Tenant, 쓰기 API, Secret/배포/의존성 설정. 서버 lib/API는 보수적으로 HIGH. 경로 검사는 의미 분석을 대신하지 않으므로 개발자 검토도 필요.
-- migration은 `DATABASE MIGRATION DETECTED`로 표시하고 자동 배포 차단. 자동 migrate/seed/reset 없음.
-- 마지막 정상 `staging-deployed` 태그부터 전체 변경을 비교하고 태그가 없을 때 STAGING_BASELINE_SHA 사용. 막힌 migration 뒤 UI commit으로 우회 불가. 잘못된 baseline/비조상 이력도 차단.
-- HIGH 변경은 push 전 검토, 배포는 main 전체 SHA를 `reviewed_sha`로 지정한 수동 실행 필요. 이번 Workflow 수정 자체도 HIGH이므로 다음 push 후 자동 배포 차단은 정상입니다.
-- DB 변경은 백업/호환성 검토와 기존 AGENCY_ROLE_MIGRATION.md, AUTH_CREDENTIALS_MIGRATION.md의 수동 절차를 따릅니다. 실제 해당 버전의 migration을 수동 준비한 후 reviewed_sha로 승인합니다.
-- 공식 Action에는 검증된 SHA를 전달합니다. Health는 해당 checkout에서 계산한 빌드 지문과 배포된 `/__deployment.json`을 비교하고 `/api/health` HTTP 200/status ok를 검사합니다. SHA 자체를 HTTP로 검증하는 것은 아니며 기존 지문 방식을 유지합니다. 앱/DB 상태 확인 범위를 과장하지 않습니다.
-- Health 성공 뒤에만 staging-deployed 태그를 갱신합니다. 실패하면 기존 태그 유지, 자동 rollback 없음.
-- `.github/workflows/browser-e2e.yml` 수동 E2E 유지. 기존 로컬 실행 약 3분.
+| 결정 | 의미 |
+| --- | --- |
+| AUTO | 일반 제품 개발. 로컬 Gate·Secret/diff 검토 후 자동 commit/push, CI 필수 Gate 통과 후 Staging 자동배포 |
+| MANUAL_REVIEW | 아래 5개 범주. 로컬 commit/push는 해당 변경 승인 후 수행. 배포는 main 전체 SHA를 reviewed_sha로 수동 지정 |
+| BLOCKED | Secret/필수 검증 실패/잘못된 저장소·이력 등. 승인으로 우회할 수 없음 |
+
+AUTO: UI, Public Website/Public Route, 일반 페이지, Dashboard/Journey/Performance/Campaign/Operations/Reports/Connections, Demo Connector/Dataset, Notification/Search/Onboarding, 일반 업무 로직, 비파괴 조회 및 기존 Tenant 경계를 유지하는 Create/Update API, 플랫폼 설정 저장, Export/Report. lib/** 또는 app/api/** 경로만으로 수동 승인을 요구하지 않습니다.
+
+MANUAL_REVIEW는 ① 파괴적 DB·분석 불가 migration ② 핵심 인증·Session·Password·Guard ③ Role/Permission/Membership/Tenant 접근 제어 ④ Secret/환경 구조 ⑤ CI/CD·Docker·Cloudtype·배포/빌드/테스트 실행 및 Git 정책 변경입니다. 관련 보안 테스트 약화도 CI 보안 변경으로 검토합니다. LOW/MEDIUM은 AUTO의 참고 정보입니다.
+
+Public 페이지 추가는 AUTO지만 proxy/중앙 권한 경계 수정은 수동 검토합니다. 기존 requireAdvertiserAccess 등의 Guard를 유지한 일반 API 저장 로직은 AUTO입니다. Guard 인자나 광고주 범위를 제거/변경하면 수동 검토합니다. 이름·호출 signature 기반 정적 검사는 임의 코드의 안전성을 증명하지 못합니다. **실제 diff와 신규 API의 IDOR/Tenant 테스트를 개발자가 반드시 검토**합니다. 새 인증/권한 구현을 다른 파일명으로 옮겨 AUTO로 만드는 것은 금지합니다.
+
+### 필수 CI Gate
+
+Policy(전체 이력 Secret Scan + SQL 분석 + 민감 변경 판정)와 Quality를 모두 통과해야 Deploy합니다.
+
+Quality: npm ci → Prisma generate → TypeScript → Lint → deployment tests → Unit → Build → Chromium 설치 → 전체 Browser/Tenant Isolation 회귀. 브라우저 검증은 Mock과 격리된 로컬 SQLite DB이며 실제 Cloudtype DB/API를 사용하지 않습니다. 테스트/Build 실패는 BLOCKED로 요약하고 reviewed_sha가 있어도 Deploy를 실행하지 않습니다. 기존 별도 수동 E2E workflow도 유지합니다.
+
+Secret scan은 마지막 정상 배포 이후 도입된 각 commit(merge parent 포함)의 변경 파일을 검사합니다. 중간 commit에 추가 후 삭제된 Secret도 BLOCKED입니다. key header, 공급자 token, DB credential URL, credential literal, 고엔트로피 후보와 민감 파일명을 검사하며 값은 로그에 출력하지 않습니다. 탐지 후보는 원인을 해결해야 하며 reviewed_sha 예외가 없습니다. 패턴 검사에는 미탐/오탐 가능성이 있으므로 값이 없는 안전한 검토를 병행하고 실제 Secret은 절대 허용하지 않습니다.
+
+### Migration 판정과 실행은 별개
+
+새 migration SQL만 제한된 SQL allowlist로 분석합니다. 새 table(지원 scalar type/PK), nullable column 추가, 일반 index 추가는 NON_DESTRUCTIVE로 AUTO 가능합니다. NOT NULL/unique index/지원 밖 SQL은 수동 검토, DROP COLUMN/TABLE·TRUNCATE·전체 DELETE·인식 가능한 rename/UPDATE는 파괴적 변경으로 수동 검토합니다. 분석 실패 구문과 destructive operation이 함께 있으면 BLOCKED입니다. 기존 migration 편집/삭제, schema만 변경, 기존 field 제거/변경은 자동 승인하지 않습니다. Auth/Membership 모델은 additive라도 수동 검토합니다.
+
+SQL 분석은 전체 PostgreSQL 문법/DB 상태 검증이 아닙니다. SQL과 Prisma schema 정합성, 중복 index, 실제 데이터 제약, 실행 계획/lock, 애플리케이션과 DB 버전 호환성은 별도 검토 대상입니다. **AUTO는 migration 자동 실행을 뜻하지 않습니다.** 기존 production migration 전략을 유지하여 이 pipeline에서는 Staging migrate/seed/reset을 실행하지 않습니다. 새 column/table을 사용하는 코드는 배포 전 기존 PostgreSQL 절차로 DB 준비가 필요합니다. SQL 적용은 별도의 승인 범위입니다.
+
+### 배포·복구 안전장치
+
+- 마지막 정상 staging-deployed 태그부터 누적 변경을 비교하며 태그가 없으면 STAGING_BASELINE_SHA를 사용합니다. 후속 UI commit으로 민감 변경을 숨길 수 없습니다.
+- 잘못된 baseline, 비조상 이력/force push 필요 상황, 예상 origin/GITHUB_REPOSITORY 불일치는 BLOCKED입니다.
+- reviewed_sha는 workflow_dispatch에서 대상 전체 SHA와 일치할 때만 MANUAL_REVIEW를 통과시킵니다. 자동 생성/임의 제출 금지. 로컬 Push 승인과 CI 수동 실행은 별개입니다.
+- main push + workflow_dispatch, 직렬 실행, 기존 공식 Cloudtype Action과 서비스만 유지합니다. 이번 정책 수정도 MANUAL_REVIEW이므로 최초 적용에는 사용자 검토가 필요합니다.
+- Health는 동일 checkout의 빌드 지문과 /__deployment.json 일치 및 /api/health HTTP 200/status ok를 확인합니다. SHA 자체를 HTTP로 검증하는 것은 아닙니다.
+- Health 성공 뒤에만 마지막 정상 태그를 갱신합니다. 실패 시 기존 태그를 유지하고 자동 rollback하지 않습니다.
 
 ## Codex 작업과 수동 복구
 
-Codex의 작업 시작, Risk 분류, Secret 검사, 사용자 변경 보호, 검증, commit/push 및 완료 보고 규칙은 루트 [AGENTS.md](AGENTS.md)를 단일 기준으로 사용합니다. LOW/MEDIUM은 해당 조건 충족 시 반복 승인 없이 commit/push하며 HIGH는 사용자 명시적 승인 전 push하지 않습니다. 기존 Actions의 보수적인 경로 판정도 유지합니다. 배포 설정/복구 절차는 이 문서를 따릅니다.
+Codex의 작업 시작, Risk 분류, Secret 검사, 사용자 변경 보호, 검증, commit/push 및 완료 보고 규칙은 루트 [AGENTS.md](AGENTS.md)를 단일 기준으로 사용합니다. AUTO는 필수 Gate 통과 후 반복 승인 없이 commit/push하며 MANUAL_REVIEW는 사용자 명시적 승인 전 commit/push하지 않습니다. BLOCKED는 원인을 해결하고 재검증해야 합니다. 배포 설정/복구 절차는 이 문서를 따릅니다.
 
 설정 후 같은 main SHA로 Actions Run workflow를 실행하고 reviewed_sha에 해당 SHA를 지정합니다. Secret 누락이면 Cloudtype main의 Secret 이름과 기존 값 일치를 확인합니다. 품질 실패는 코드를 수정하며 검사 생략으로 우회하지 않습니다. Health 실패는 Cloudtype 빌드/실행 로그·공개 지문·포트/주소를 확인합니다.
 
