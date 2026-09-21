@@ -1,13 +1,14 @@
 "use client";
+import {planStatus} from "@/lib/product-language";
 import {useState,type ReactNode} from "react";
 import Link from "next/link";
 import {ArrowRight} from "lucide-react";
 
 export const compactMoney=(value:number)=>{const n=Math.abs(value),sign=value<0?"−":"";return `${sign}₩${n>=1e8?`${Number((n/1e8).toFixed(2)).toLocaleString("ko-KR")}억`:n>=1e4?`${Number((n/1e4).toFixed(1)).toLocaleString("ko-KR")}만`:Math.round(n).toLocaleString("ko-KR")}`;};
 export function Money({value}:{value:number}){return <span title={`₩${Math.round(value).toLocaleString("ko-KR")}`}>{compactMoney(value)}</span>}
-export function DataSourceBadge({kind="mock"}:{kind?:"mock"|"real"|"forecast"|"automation"}){return <span className={`ui-badge ui-source ${kind}`}>{({mock:"MOCK DATA",real:"REAL GA4 DATA",forecast:"DEMO FORECAST",automation:"MOCK AUTOMATION"})[kind]}</span>}
-const statuses:Record<string,[string,string]>={HEALTHY:["정상","positive"],WATCH:["확인 필요","warning"],"ACTION REQUIRED":["조치 필요","critical"],LEARNING:["학습 중","neutral"],LIMITED:["제한됨","warning"],"MOCK ACTIVE":["운영 중 · Mock","positive"],ACTIVE:["운영 중","positive"],DRAFT:["초안","neutral"],READY:["준비 완료","neutral"],PAUSED:["일시 중지","warning"]};
-export function StatusBadge({status}:{status:string}){const [label,tone]=statuses[status.toUpperCase()]??[status,"neutral"];return <span className={`ui-badge ${tone}`} title={status}>{label}</span>}
+export function DataSourceBadge({kind="mock"}:{kind?:"mock"|"real"|"forecast"|"automation"}){return <span className={`ui-badge ui-source ${kind}`}>{({mock:"MOCK DATA",real:"REAL GA4 DATA",forecast:"DEMO FORECAST",automation:"운영 제안 규칙 · DEMO"})[kind]}</span>}
+const statuses:Record<string,[string,string]>={HEALTHY:["정상","positive"],WATCH:["확인 필요","warning"],"ACTION REQUIRED":["조치 필요","critical"],LEARNING:["학습 중","neutral"],LIMITED:["제한됨","warning"],"MOCK ACTIVE":[planStatus("MOCK ACTIVE"),"positive"],ACTIVE:["활성","positive"],DRAFT:[planStatus("DRAFT"),"neutral"],READY:[planStatus("READY"),"neutral"],PAUSED:[planStatus("PAUSED"),"warning"]};
+export function StatusBadge({status}:{status:string}){const [label,tone]=statuses[status.toUpperCase()]??[status,"neutral"];return <span className={`ui-badge ${tone}`} title={label}>{label}</span>}
 export function SectionHeader({title,description,action}:{title:string;description?:string;action?:ReactNode}){return <div className="ui-section-header"><div><h2>{title}</h2>{description&&<p>{description}</p>}</div>{action}</div>}
 export function KpiMetric({label,value,note,tone="neutral"}:{label:string;value:ReactNode;note?:string;tone?:"neutral"|"positive"|"warning"|"forecast"}){return <div className={`ui-metric ${tone}`}><span>{label}</span><strong>{value}</strong>{note&&<small>{note}</small>}</div>}
 export function InsightBanner({children,href}:{children:ReactNode;href?:string}){return <div className="ui-insight"><span className="ui-insight-label">개선 기회</span><p>{children}</p>{href&&<Link href={href}>자세히 보기 <ArrowRight size={14}/></Link>}</div>}
@@ -15,7 +16,7 @@ export function EmptyState({title,description,href,action}:{title:string;descrip
 export function WorkspaceSkeleton(){return <div className="ui-skeleton" role="status" aria-label="성과를 불러오는 중"><div className="ux-kpis">{[0,1,2,3].map(i=><div key={i}/>)}</div><div/><span className="sr-only">성과를 불러오는 중…</span></div>}
 export function DataTable({label,children}:{label:string;children:ReactNode}){return <div className="ui-table ux-table" role="region" aria-label={label} tabIndex={0}><table>{children}</table></div>}
 export type SignalType="DROP"|"OPPORTUNITY"|"RECOVERY"|"DATA"|"CAMPAIGN";
-const signalLabels:Record<SignalType,string>={DROP:"하락",OPPORTUNITY:"개선 기회",RECOVERY:"회수",DATA:"데이터",CAMPAIGN:"캠페인"};
+const signalLabels:Record<SignalType,string>={DROP:"하락",OPPORTUNITY:"개선 기회",RECOVERY:"회수",DATA:"데이터",CAMPAIGN:"실행안"};
 export function SignalIndicator({type}:{type:SignalType}){return <span className="ds-signal-type" data-signal={type}>{signalLabels[type]}</span>}
 export function ActionQueue({items}:{items:{id:string;title:string;description:string;status:string;href:string;action:string}[]}){return <ol className="ui-action-queue">{items.map((item,index)=><li key={item.id}><span className="ui-priority">{String(index+1).padStart(2,"0")}</span><div><h3>{item.title}</h3><p>{item.description}</p></div><SignalIndicator type={item.status==="WATCH"?"CAMPAIGN":"OPPORTUNITY"}/><Link className="ui-secondary" href={item.href}>{item.action}<ArrowRight size={14}/></Link></li>)}</ol>}
 export function TrendChart({rows,title,description,unit="건",forecast=false}:{rows:{date:string;value:number}[];title:string;description:string;unit?:string;forecast?:boolean}){

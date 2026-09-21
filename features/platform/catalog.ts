@@ -1,6 +1,6 @@
 import type {ConnectorDefinition,ConnectorId,PlatformConnector,AnalyticsConnector,AdsConnector,PlatformDocument} from '@/types/platform';
 import type {DashboardData} from '@/types/domain';
-export const stateNames={disconnected:'연결 안 됨',setup:'설정 필요',connecting:'연결 중',healthy:'정상',attention:'확인 필요',error:'오류'};
+export const stateNames={disconnected:'연결 안 됨',setup:'설정 필요',connecting:'데모 설정 중',healthy:'데모 연결 정상',attention:'확인 필요',error:'오류'};
 const adFields=['광고비','노출','클릭','전환','전환매출'];
 export const connectorCatalog:ConnectorDefinition[]=[
  {id:'ga4',name:'Google Analytics 4',icon:'G4',description:'자사몰 방문부터 구매까지 고객 행동을 확인합니다.',kind:'analytics',fields:['사용자','세션','상품 조회','장바구니','결제 시작','구매','매출','유입 경로'],accounts:['Progress Media GA4','Demo Store GA4','Test Property'],properties:['Demo Store · 100001','Demo Shop · 100002']},
@@ -21,4 +21,4 @@ export const connections=new ConnectionService();
 export function emptyPlatform():PlatformDocument{return {version:1,profile:{siteUrl:'',monthlyBudget:0,goal:'구매'},connections:{},validated:false,started:false,activity:[]};}
 export const goals=['매출','구매','DB','회원가입','브랜드 인지도'];
 export function onboardingSteps(d:PlatformDocument,managerCount:number,hasData:boolean){return [!!d.profile.siteUrl&&d.profile.monthlyBudget>0,managerCount>0,d.connections.ga4?.state==='healthy',d.validated&&hasData,d.started];}
-export function workspaceHealth(d:PlatformDocument){return Object.values(d.connections).some(c=>c?.state==='error')?'데이터 오류':!d.started?'설정 중':!d.validated||Object.values(d.connections).some(c=>c?.state==='attention')?'확인 필요':'운영 정상';}
+export function workspaceHealth(d:PlatformDocument){return Object.values(d.connections).some(c=>c?.state==='error')?'데이터 오류':!d.started?'설정 중':!d.validated||Object.values(d.connections).some(c=>c?.state==='attention')?'확인 필요':'분석 준비 완료';}

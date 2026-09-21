@@ -9,15 +9,15 @@ import { defaultGuardrail } from "../data/mock/operations-config";
 import { loadCampaignWorkspace } from "./campaign-service";
 import { builtInRules, monitorCampaign, rulePreview, loadOperations } from "./operations-engine";
 export function saveAutomationRule(rule:AutomationRule, force = false) { assertAccess(rule.advertiserId,"MANAGE_OPERATIONS");
-  if(!readCampaignStore(rule.advertiserId).campaigns.some(c=>c.id===rule.campaignId&&c.status!=="DRAFT"))throw new Error("삭제되었거나 존재하지 않는 Campaign입니다.");
+  if(!readCampaignStore(rule.advertiserId).campaigns.some(c=>c.id===rule.campaignId&&c.status!=="DRAFT"))throw new Error("삭제되었거나 존재하지 않는 실행안입니다.");
   if(!force && similarRules(rule,readOperations(rule.advertiserId).rules).length)throw new Error("유사한 운영 규칙이 이미 존재합니다. 확인 후 강제 저장할 수 있습니다.");
   storeRule(rule);
 }
 export async function applyOperation(advertiserId:string,rec:OperationRecommendation,period:Period):Promise<OperationChange> { assertAccess(advertiserId,"MANAGE_OPERATIONS");
   const store=readOperations(advertiserId),c=readCampaignStore(advertiserId).campaigns.find(c=>c.id===rec.campaignId);
-  if(!c)throw new Error("삭제되었거나 존재하지 않는 Campaign입니다.");
+  if(!c)throw new Error("삭제되었거나 존재하지 않는 실행안입니다.");
   if(store.decisions[rec.id])throw new Error("이미 처리된 운영 액션입니다.");
-  if(JSON.stringify(c)!==JSON.stringify(rec.preview.before))throw new Error("캠페인이 변경되었습니다. 최신 추천을 다시 검토하세요.");
+  if(JSON.stringify(c)!==JSON.stringify(rec.preview.before))throw new Error("실행안이 변경되었습니다. 최신 추천을 다시 검토하세요.");
   const rule=rec.rule.id.startsWith("builtin-")?rec.rule:store.rules.find(r=>r.id===rec.rule.id);
   if(!rule)throw new Error("규칙이 삭제되었습니다.");
   const evaluated=await loadOperations(advertiserId,period);
@@ -26,7 +26,7 @@ export async function applyOperation(advertiserId:string,rec:OperationRecommenda
   const ctx=await loadCampaignWorkspace({advertiserId,period:c.period});
   // Re-read after async work: concurrent clicks must not apply twice.
   const latest=readCampaignStore(advertiserId).campaigns.find(item=>item.id===c.id),fresh=readOperations(advertiserId);
-  if(!latest||JSON.stringify(latest)!==JSON.stringify(c)||fresh.decisions[rec.id])throw new Error("이미 처리되었거나 변경된 캠페인입니다.");
+  if(!latest||JSON.stringify(latest)!==JSON.stringify(c)||fresh.decisions[rec.id])throw new Error("이미 처리되었거나 변경된 실행안입니다.");
   const latestRule=rule.id.startsWith("builtin-")?builtInRules(c,fresh.targets[c.id]??configuredTarget()).find(r=>r.id===rule.id):fresh.rules.find(r=>r.id===rule.id);
   if(!latestRule)throw new Error("규칙이 삭제되었습니다.");
   if(JSON.stringify(latestRule)!==JSON.stringify(rec.rule))throw new Error("규칙 또는 목표가 변경되었습니다. 새 Preview를 검토하세요.");

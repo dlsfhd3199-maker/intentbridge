@@ -10,7 +10,7 @@ test('광고주 관리: 검색·담당자·상태·연결 필터와 Workspace �
  await db.workspaceDocument.create({data:{advertiserId:'brand-a',key:'intentbridge:platform:v1:brand-a',payload:JSON.parse(JSON.stringify(document)),revision:1}});
  try{
   await page.goto('/advertisers?period=14');const area=page.getByTestId('advertiser-management'),rows=area.locator('tbody tr');await expect(rows).toHaveCount(2);
-  await expect(area.locator('.am-summary')).toContainText('전체 광고주2');await expect(rows.filter({hasText:'브랜드 A'})).toContainText(`1 / ${connectorCatalog.length}`);await expect(rows.filter({hasText:'브랜드 A'})).toContainText('운영 정상');await expect(rows.filter({hasText:'브랜드 B'})).toContainText('설정 중');
+  await expect(area.locator('.am-summary')).toContainText('전체 광고주2');await expect(rows.filter({hasText:'브랜드 A'})).toContainText(`1 / ${connectorCatalog.length}`);await expect(rows.filter({hasText:'브랜드 A'})).toContainText('분석 준비 완료');await expect(rows.filter({hasText:'브랜드 B'})).toContainText('설정 중');
   await expect(area.locator('.ds-journey-signal,.ds-activity-rail,.ui-chart-panel')).toHaveCount(0);
   await area.getByLabel('광고주 검색').fill('브랜드 B');await expect(rows).toHaveCount(1);await expect(rows).toContainText('브랜드 B');await area.getByLabel('광고주 검색').fill('없는 광고주');await expect(rows).toHaveCount(0);await area.getByRole('button',{name:'필터 초기화'}).click();
   await area.getByLabel('담당자',{exact:true}).selectOption(manager.id);await expect(rows).toHaveCount(1);await expect(rows).toContainText('브랜드 A');await area.getByLabel('담당자',{exact:true}).selectOption('unassigned');await expect(rows).toHaveCount(1);await expect(rows).toContainText('브랜드 B');await area.getByLabel('담당자',{exact:true}).selectOption('');

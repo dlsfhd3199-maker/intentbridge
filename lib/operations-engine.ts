@@ -35,11 +35,11 @@ export function rulePreview(rule:AutomationRule,c:Campaign,metrics:OperationMetr
   const matched=valid&&rule.enabled&&matchesConditions(rule.conditions,metrics), after=structuredClone(c),reasons:string[]=[];
   const supporting=rule.conditions.map(cond=>{const m=operationMetrics.find(m=>m.id===cond.metric);const v=metrics[cond.metric];return `${m?.label ?? cond.metric} ${v===null?"산출 불가":Number(v).toFixed(1)}${m?.unit ?? ""} ${cond.operator} ${cond.value}`;});
   let category:ChangeCategory="Notification", allowed=matched;
-  if(!valid)reasons.push("잘못된 규칙 또는 캠페인 참조입니다.");
+  if(!valid)reasons.push("잘못된 규칙 또는 실행안 참조입니다.");
   if(!matched)reasons.push("현재 데이터가 모든 AND 조건을 충족하지 않습니다.");
   const action=rule.action;
-  if(action.type==="Increase Budget"||action.type==="Decrease Budget") {category="Budget";const result=guardBudget(action,c.budget.daily,c.audienceSize,metrics,guard);allowed=allowed&&result.allowed;reasons.push(...result.reasons);after.budget=changeCampaignBudget(c.budget,"daily",result.daily);if(c.status!=="MOCK ACTIVE"){allowed=false;reasons.push("예산 변경은 MOCK ACTIVE 캠페인에만 적용합니다.");}}
-  if(action.type==="Pause"||action.type==="Resume") {category="Status";after.status=action.type==="Pause"?"PAUSED":"MOCK ACTIVE";if(action.type==="Pause"&&c.status!=="MOCK ACTIVE"||action.type==="Resume"&&!["READY","PAUSED"].includes(c.status)){allowed=false;reasons.push("현재 상태에서는 이 상태 전환을 적용할 수 없습니다.");}}
+  if(action.type==="Increase Budget"||action.type==="Decrease Budget") {category="Budget";const result=guardBudget(action,c.budget.daily,c.audienceSize,metrics,guard);allowed=allowed&&result.allowed;reasons.push(...result.reasons);after.budget=changeCampaignBudget(c.budget,"daily",result.daily);if(c.status!=="MOCK ACTIVE"){allowed=false;reasons.push("예산안 변경은 검토 완료 상태인 실행안에만 반영합니다.");}}
+  if(action.type==="Pause"||action.type==="Resume") {category="Status";after.status=action.type==="Pause"?"PAUSED":"MOCK ACTIVE";if(action.type==="Pause"&&c.status!=="MOCK ACTIVE"||action.type==="Resume"&&!["READY","PAUSED"].includes(c.status)){allowed=false;reasons.push("현재 검토 상태에서는 이 상태로 변경할 수 없습니다.");}}
   if(action.type==="Creative Refresh") {category="Creative";after.message={...c.message,headline:(c.message.headline.startsWith("새 제안 · ")?"다시 만나는 · ":"새 제안 · ")+c.message.headline.replace(/^(새 제안 · |다시 만나는 · )/,"")};after.message.headline=after.message.headline.slice(0,200);reasons.push("메시지 버전을 변경합니다. 근거 없는 성과 상승은 Forecast에 가산하지 않습니다.");}
   if(action.type==="Audience Expand") {category="Audience";after.sourceIds=ctx.funnel.sources.map(s=>s.id);after.window=30;reasons.push("동일 유입 매체의 모든 Source와 30D Window로 확장합니다. 변경 값(%)은 이 액션에서 사용하지 않습니다.");}
   if(action.type==="Window Change") {category="Window";after.window=action.value as Campaign["window"];}
@@ -47,7 +47,7 @@ export function rulePreview(rule:AutomationRule,c:Campaign,metrics:OperationMetr
   after.audienceSize=evaluation.audience;after.audienceName=evaluation.segmentName;after.forecast=evaluation.forecast;after.tracking=evaluation.tracking;
   if(action.type==="Notify Only") Object.assign(after,structuredClone(c));
   if(action.type==="Pause") after.forecast={...after.forecast,reach:0,impressions:0,clicks:0,purchases:0,revenue:0,cpa:null,roas:null,modeledSpend:0,unspentBudget:after.budget.total};
-  if(action.type!=="Notify Only"&&!evaluation.ready){allowed=false;reasons.push("Campaign 생성 조건을 충족하지 않아 적용할 수 없습니다.");}
+  if(action.type!=="Notify Only"&&!evaluation.ready){allowed=false;reasons.push("실행안 저장 조건을 충족하지 않아 반영할 수 없습니다.");}
   if(action.type==="Audience Expand"&&after.audienceSize<=c.audienceSize){allowed=false;reasons.push("현재 Mock 코호트에서 더 확장할 Audience가 없습니다.");}
   if(action.type==="Window Change"&&after.window===c.window){allowed=false;reasons.push("현재 Window와 같습니다.");}
   if(c.audienceSize===0&&action.type==="Increase Budget"){allowed=false;reasons.push("Audience가 0명이므로 증액할 수 없습니다.");}

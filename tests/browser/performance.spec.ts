@@ -30,9 +30,9 @@ test("시나리오·6개 레버 경계·Reset·추천·What-if가 실시간으�
   for (let index = 0; index < 6; index++) await expect(sliders.nth(index)).toHaveValue("0");
   await page.getByLabel("Acquisition Budget 값", { exact: true }).fill("50");
   await expect(page.getByRole("region", { name: "현재 대비 예상 성과" })).toContainText("악화");
-  await page.getByRole("button", { name: "시뮬레이션에 적용" }).first().click();
+  await page.getByRole("button", { name: "추천안으로 계산" }).first().click();
   await expect(page.getByLabel("Acquisition Budget 값", { exact: true })).toHaveValue("0");
-  await page.getByRole("button", { name: "시뮬레이션에 적용" }).first().click();
+  await page.getByRole("button", { name: "추천안으로 계산" }).first().click();
   await expect(result).not.toHaveText("94건");
   const whatIf = page.getByRole("group", { name: "What-if" });
   await whatIf.getByRole("button", { name: "재공략 예산 +30%", exact: true }).click();

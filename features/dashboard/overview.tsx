@@ -22,7 +22,7 @@ function MockOverview() {
   const data = useDashboard();
   const directShare = data.analytics.directPurchases / data.totals.purchases * 100;
   return <div className="space-y-6">
-    <Link className="campaign-quick-action" href={`/campaigns?advertiser=${data.advertiser.id}&period=${data.period}`}>캠페인 만들기 <ArrowRight size={16}/></Link>
+    <Link className="campaign-quick-action" href={`/campaigns?advertiser=${data.advertiser.id}&period=${data.period}`}>실행안 작성 <ArrowRight size={16}/></Link>
     <Metrics data={data}/>
     <OperationsSummary advertiserId={data.advertiser.id} period={data.period}/>
     <div className="overview-grid"><FunnelSummary data={data}/><section className="audience-panel"><div className="panel-heading"><h2>다시 만날 고객</h2><span className="soft-badge">MOCK</span></div><p className="muted text-sm">Meta Retargetable 고객 그룹</p><div className="audience-value">{number(data.retargeting.retargetableAudience)}<span>명</span></div><div className="audience-track"><span style={{ width: `${data.retargeting.retargetableAudience / data.analytics.nonPurchaseUsers * 100}%` }}/></div><div className="audience-caption"><span>미구매 고객 중</span><b>{percent(data.retargeting.retargetableAudience / data.analytics.nonPurchaseUsers * 100)}</b></div><div className="audience-stat"><span>현재 미구매 고객</span><strong>{number(data.analytics.nonPurchaseUsers)}명</strong></div><div className="exclusion-note"><ShieldCheck size={16}/> 직접·회수 구매 고객 제외</div><p className="small-note">기간 내 구매 이벤트가 없는 예시 고객 기준입니다. 실제 광고 대상과는 다를 수 있습니다.</p></section></div>

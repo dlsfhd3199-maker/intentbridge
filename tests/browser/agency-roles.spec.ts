@@ -23,7 +23,7 @@ test("MANAGER 승인·복수 배정·Dashboard·N:N·IDOR·운영 쓰기·연결
   expect((await marketer.request.patch("http://localhost:3100/api/workspaces/brand-a/connection",{headers,data:{dataMode:"real"}})).status()).toBe(403);expect((await marketer.request.post("http://localhost:3100/api/ga4?advertiser=brand-a",{headers})).status()).toBe(403);
   expect((await marketer.request.put("http://localhost:3100/api/workspace-data",{headers,data:{key:"intentbridge:simulation-library:v1:brand-a",revision:0,payload:[]}})).status()).toBe(200);
   expect((await marketer.request.put("http://localhost:3100/api/workspace-data",{headers,data:{key:"intentbridge:simulation-library:v1:"+other.id,revision:0,payload:[]}})).status()).toBe(403);
-  await marketer.goto("http://localhost:3100/campaigns?advertiser=brand-b");await marketer.getByLabel("Campaign Name",{exact:true}).fill("마케터 운영 검증");await marketer.getByRole("button",{name:"Mock 캠페인 생성",exact:true}).click();await saved(marketer);expect(await db.campaign.count({where:{advertiserId:"brand-b"}})).toBe(1);
+  await marketer.goto("http://localhost:3100/campaigns?advertiser=brand-b");await marketer.getByLabel("실행안 이름",{exact:true}).fill("마케터 운영 검증");await marketer.getByRole("button",{name:"실행안 저장",exact:true}).click();await saved(marketer);expect(await db.campaign.count({where:{advertiserId:"brand-b"}})).toBe(1);
   await page.getByRole("button",{name:"내부 마케터",exact:true}).click();await expect(page.getByRole("row").filter({hasText:email})).toContainText("2개 광고주");
  }finally{await context.close();await db.user.deleteMany({where:{id:{in:[manager.id,second.id]}}});await db.advertiser.delete({where:{id:other.id}});}
 });

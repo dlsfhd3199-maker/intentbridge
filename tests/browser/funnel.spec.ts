@@ -45,7 +45,7 @@ test("퍼널, 소스, 세그먼트, Audience 조건, 캠페인 미리보기 동�
   await expect(size).toHaveText("0명");
   const segments = page.getByRole("group", { name: "미구매 세그먼트 선택" });
   await segments.getByRole("button", { name: /장바구니 \/ 미구매/ }).click();
-  const previewButton = page.getByRole("button", { name: "재방문 광고 Preview 열기" });
+  const previewButton = page.getByRole("button", { name: "재공략 실행안 미리보기" });
   await previewButton.click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText("DEMO FORECAST");
@@ -90,7 +90,7 @@ test("완성된 퍼널과 모달의 데스크톱·모바일 레이아웃", async
     await expect(page.getByTestId("audience-size")).toHaveText("742명");
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), `funnel at ${width}`).toBe(false);
     if (width === 1440 || width === 390) await page.screenshot({ path: `test-results/funnel-${width}.png`, fullPage: true });
-    await page.getByRole("button", { name: "재방문 광고 Preview 열기" }).click();
+    await page.getByRole("button", { name: "재공략 실행안 미리보기" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
     const bounds = await dialog.boundingBox();

@@ -6,7 +6,7 @@ export const thresholds = {
 } as const;
 export const signalNames = {DROP_OFF:"이탈 증가",PERFORMANCE_DROP:"성과 하락",RECOVERY_OPPORTUNITY:"재공략 기회",CAMPAIGN_FATIGUE:"소재 피로",DATA_ISSUE:"데이터 확인",POSITIVE_MOMENTUM:"성과 상승"} as const;
 export const severityNames = {INFO:"참고",WATCH:"확인 필요",ACTION:"조치 필요",CRITICAL:"긴급 확인"} as const;
-export const statusNames = {NEW:"새 신호",REVIEWING:"검토 중",ACTIONED:"대응 완료",DISMISSED:"숨김"} as const;
+export const statusNames = {NEW:"새 신호",REVIEWING:"검토 중",ACTIONED:"검토 완료",DISMISSED:"숨김"} as const;
 export const ruleDescriptions = [
   `이탈 증가: 직전 동일 기간 대비 단계 전환율 ${thresholds.drop.watch}%p 하락 시 확인, ${thresholds.drop.action}%p 하락 시 조치. 양 기간 이전 단계 ${thresholds.sample.minimum}명 이상.`,
   `성과 하락: 구매·매출·ROAS 하락 또는 CPA 상승 ${thresholds.performance.watch}% 이상 확인, ${thresholds.performance.action}% 이상 조치. 같은 기간 KPI는 한 신호로 통합.`,

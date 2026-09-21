@@ -81,7 +81,7 @@ test("JSON/CSV/HTML Export는 전체 설계안을 포함하고 HTML/CSV 삽입�
   const {c}=await setup(),plan=campaignPlan({...c,name:'=HYPERLINK("bad")',message:{...c.message,body:'<script>alert("x")</script> & "quote"'}});
   const json=exportCampaignPlan(plan,"json"),csv=exportCampaignPlan(plan,"csv"),html=exportCampaignPlan(plan,"html");
   assert.equal(JSON.parse(json.content).campaign.id,c.id);assert.ok(csv.content.startsWith("\uFEFF"));assert.ok(csv.content.includes("'=HYPERLINK"));
-  assert.ok(html.content.includes("&lt;script&gt;"));assert.ok(!html.content.includes("<script>"));assert.ok(html.content.includes("DEMO FORECAST"));assert.ok(html.content.includes("Mock Automation"));assert.ok(html.content.includes("Content-Security-Policy"));
+  assert.ok(html.content.includes("&lt;script&gt;"));assert.ok(!html.content.includes("<script>"));assert.ok(html.content.includes("DEMO FORECAST"));assert.ok(html.content.includes("운영 제안 규칙"));assert.ok(html.content.includes("Content-Security-Policy"));
 });
 
 test("4차의 최신 초안과 저장된 DRAFT 목록을 함께 이전하고 손상 Simulation은 제외한다",async()=>{

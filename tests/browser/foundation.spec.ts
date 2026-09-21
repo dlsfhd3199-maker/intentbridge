@@ -3,7 +3,7 @@ import {PrismaClient} from "@prisma/client";
 const db=new PrismaClient({datasourceUrl:"file:./browser-test.db"});
 const headers={Origin:"http://localhost:3100"};
 test("원자적 배치는 중간 revision 실패 시 Campaign·Version·Audit을 모두 롤백한다",async({page})=>{
- await page.goto("/campaigns");await page.getByLabel("Campaign Name",{exact:true}).fill("원자적 검수");await page.getByRole("button",{name:"Mock 캠페인 생성",exact:true}).click();await saved(page);
+ await page.goto("/campaigns");await page.getByLabel("실행안 이름",{exact:true}).fill("원자적 검수");await page.getByRole("button",{name:"실행안 저장",exact:true}).click();await saved(page);
  const docs=await (await page.request.get("/api/workspace-documents?advertiser=brand-a")).json();const campaign=docs.find((d:{key:string})=>d.key.includes(":campaigns:"));const before=await db.campaign.findMany({where:{advertiserId:"brand-a"}}),audit=await db.auditLog.count();const invalid=structuredClone(campaign);invalid.payload.campaigns[0].budget.daily=-1;expect((await page.request.put("/api/workspace-data",{headers,data:invalid})).status()).toBe(400);campaign.payload.campaigns[0].name="실패하면 없어야 함";
  const failed=await page.request.put("/api/workspace-data",{headers:{...headers,"Idempotency-Key":crypto.randomUUID()},data:{documents:[campaign,{key:"intentbridge:simulation-library:v1:brand-a",payload:[],revision:999}]}});expect(failed.status()).toBe(409);expect(await db.campaign.findMany({where:{advertiserId:"brand-a"}})).toEqual(before);expect(await db.auditLog.count()).toBe(audit);
 });
@@ -27,7 +27,7 @@ test("Resend 장애에도 Credentials 로그인 가능하며 DISABLED 사용자�
 });
 
 test("저장 응답 유실 후 동일 키 재시도는 중복 Campaign·Audit을 만들지 않는다",async({page})=>{
- await page.goto("/campaigns");await saved(page);await page.getByLabel("Campaign Name",{exact:true}).fill("응답 유실 복구");await saved(page);
+ await page.goto("/campaigns");await saved(page);await page.getByLabel("실행안 이름",{exact:true}).fill("응답 유실 복구");await saved(page);
  let lost=false;await page.route("**/api/workspace-data",async route=>{const body=route.request().postDataJSON();if(!lost&&body.documents?.some((d:{payload?:{campaigns?:{status:string}[]}})=>d.payload?.campaigns?.some(c=>c.status==="READY"))){lost=true;await route.fetch();await route.abort("failed");}else await route.continue();});
- await page.getByRole("button",{name:"Mock 캠페인 생성",exact:true}).click();await expect(page.getByRole("button",{name:"저장 다시 시도"})).toBeVisible();expect(await db.campaign.count({where:{advertiserId:"brand-a"}})).toBe(1);await expect(page.locator(".cs-notice")).not.toContainText("READY 저장 완료");const audit=await db.auditLog.count();await page.getByRole("button",{name:"저장 다시 시도"}).click();await saved(page);expect(await db.auditLog.count()).toBe(audit);expect(await db.campaign.count({where:{advertiserId:"brand-a"}})).toBe(1);await page.reload();await expect(page.locator(".cs-list")).toContainText("응답 유실 복구");
+ await page.getByRole("button",{name:"실행안 저장",exact:true}).click();await expect(page.getByRole("button",{name:"저장 다시 시도"})).toBeVisible();expect(await db.campaign.count({where:{advertiserId:"brand-a"}})).toBe(1);await expect(page.locator(".cs-notice")).not.toContainText("실행 준비 저장 완료");const audit=await db.auditLog.count();await page.getByRole("button",{name:"저장 다시 시도"}).click();await saved(page);expect(await db.auditLog.count()).toBe(audit);expect(await db.campaign.count({where:{advertiserId:"brand-a"}})).toBe(1);await page.reload();await expect(page.locator(".cs-list")).toContainText("응답 유실 복구");
 });

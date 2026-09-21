@@ -68,7 +68,7 @@ function write(advertiserId: string, store: CampaignStore, reason = "Campaign St
   try { businessStorage.setItem(key, JSON.stringify(store)); return "local"; } catch { return "memory"; }
 }
 export function persistCampaignDraft(draft: CampaignDraft): "local" | "memory" {
-  if (!isCampaignDraft(draft, draft.advertiserId)) throw new Error("유효하지 않은 캠페인 초안입니다.");
+  if (!isCampaignDraft(draft, draft.advertiserId)) throw new Error("유효하지 않은 실행안 초안입니다.");
   const store = readCampaignStore(draft.advertiserId);
   return write(draft.advertiserId, { ...store, draft, drafts: store.campaigns.some(c => c.draftId === draft.draftId && c.status !== "DRAFT") ? store.drafts : [draft, ...store.drafts.filter(d => d.draftId !== draft.draftId)], lastEdited: draft.updatedAt });
 }
@@ -87,7 +87,7 @@ export function saveCampaign(draft: CampaignDraft, evaluation: CampaignEvaluatio
 export function changeCampaignStatus(advertiserId: string, id: string, status: CampaignStatus): Campaign {
   const store = readCampaignStore(advertiserId);
   const campaign = store.campaigns.find(item => item.id === id);
-  if (!campaign) throw new Error("캠페인을 찾지 못했습니다.");
+  if (!campaign) throw new Error("실행안을 찾지 못했습니다.");
   const allowed = campaign.status === "READY" || campaign.status === "PAUSED" ? status === "MOCK ACTIVE" : campaign.status === "MOCK ACTIVE" ? status === "PAUSED" : false;
   if (!allowed) throw new Error("허용되지 않는 Mock 상태 전환입니다.");
   const updated = { ...campaign, status, updatedAt: new Date().toISOString() };
@@ -111,9 +111,9 @@ export function readCampaignHandoff(id: string): CampaignHandoff | null { assert
 }
 
 export function replaceMockCampaign(campaign: Campaign, reason: string): void {
-  if (!isCampaign(campaign,campaign.advertiserId)) throw new Error("잘못된 Campaign 상태입니다.");
+  if (!isCampaign(campaign,campaign.advertiserId)) throw new Error("잘못된 실행안 상태입니다.");
   const store = readCampaignStore(campaign.advertiserId);
-  if (!store.campaigns.some(c => c.id === campaign.id)) throw new Error("삭제되었거나 존재하지 않는 Campaign입니다.");
+  if (!store.campaigns.some(c => c.id === campaign.id)) throw new Error("삭제되었거나 존재하지 않는 실행안입니다.");
   write(campaign.advertiserId,{...store,campaigns:store.campaigns.map(c => c.id === campaign.id ? campaign : c),draft:store.draft?.draftId === campaign.draftId ? campaign : store.draft,lastEdited:campaign.updatedAt},reason);
 }
 export function duplicateDraft(draft: CampaignDraft): CampaignDraft { assertAccess(draft.advertiserId,"MANAGE_CAMPAIGN");

@@ -20,7 +20,7 @@ for(const [email,own,other,otherName]of [["a@intentbridge.test","brand-a","brand
 });
 test("ADMIN A/B 접근·서버 저장·세션 해시·Audit·CSRF·revision 충돌",async({page})=>{
  for(const id of ["brand-a","brand-b"])expect((await page.request.get(`/api/workspaces/${id}`)).status()).toBe(200);
- await page.goto("/campaigns");await page.getByLabel("Campaign Name",{exact:true}).fill("DB 지속성 검증");await page.getByRole("button",{name:"Mock 캠페인 생성",exact:true}).click();await saved(page);await page.reload();await expect(page.locator(".cs-list")).toContainText("DB 지속성 검증");
+ await page.goto("/campaigns");await page.getByLabel("실행안 이름",{exact:true}).fill("DB 지속성 검증");await page.getByRole("button",{name:"실행안 저장",exact:true}).click();await saved(page);await page.reload();await expect(page.locator(".cs-list")).toContainText("DB 지속성 검증");
  const documents=await (await page.request.get("/api/workspace-documents?advertiser=brand-a")).json();const doc=documents.find((d:{key:string})=>d.key==="intentbridge:campaigns:v1:brand-a");expect(doc.revision).toBeGreaterThan(0);
  const payload={key:doc.key,payload:doc.payload,revision:0};expect((await page.request.put("/api/workspace-data",{data:payload,headers:{Origin:"http://localhost:3100"}})).status()).toBe(409);expect((await page.request.put("/api/workspace-data",{data:payload,headers:{Origin:"https://attacker.invalid"}})).status()).toBe(403);
  const other=structuredClone(doc.payload);other.campaigns[0].advertiserId="brand-b";expect((await page.request.put("/api/workspace-data",{data:{...payload,payload:other,revision:doc.revision},headers:{Origin:"http://localhost:3100"}})).status()).toBe(400);

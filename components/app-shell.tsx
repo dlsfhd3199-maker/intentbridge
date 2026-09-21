@@ -1,4 +1,5 @@
 "use client";
+import {navigationCopy} from "@/lib/product-language";
 import {PlatformToolbar} from "@/features/platform/platform-toolbar";
 import {WorkspaceDataGate} from "./workspace-data-gate";
 import {signOut} from "next-auth/react";
@@ -6,7 +7,7 @@ import {flushServerStorage} from "@/lib/server-storage";
 import Link from "next/link";
 import {UserRoleProvider,useUserRole} from "@/context/user-role-context";
 import {can,canAccessAdvertiser} from "@/lib/permissions";
-import {navigation,canAccessRoute} from "@/lib/route-permissions";
+import {navigation as storedNavigation,canAccessRoute} from "@/lib/route-permissions";
 import {AccessDenied} from "./access-gate";
 import "@/features/dashboard/workspace.css";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -20,7 +21,8 @@ import "@/features/ga4/ga4.css";
 import { getDashboard } from "@/lib/dashboard";
 import type { Advertiser, DashboardData, Period } from "@/types/domain";
 
-const pageDescriptions:Record<string,string>={"/dashboard":"유입부터 구매까지, 놓친 고객과 다음 운영 액션을 연결합니다.","/advertisers":"광고주를 찾고, 담당자와 연결 상태를 확인해 Workspace로 이동합니다.","/funnel":"고객을 놓치는 구간과 다시 만날 기회를 확인합니다.","/performance":"현재 데이터를 기준으로 개선안과 예상 변화를 비교합니다.","/campaigns":"고객 그룹과 메시지를 설계하고 캠페인 상태를 확인합니다.","/operations":"검토가 필요한 운영 제안을 확인하고 다음 액션을 결정합니다.","/reports":"이번 기간 성과와 개선 기회를 한 장의 보고서로 읽습니다.","/connections":"데이터 출처와 채널별 연결 상태를 확인합니다.","/settings":"사용자, 담당 광고주와 시스템 설정을 관리합니다."};
+const navigation=storedNavigation.map(item=>({...item,...navigationCopy[item.href]}));
+const pageDescriptions:Record<string,string>={"/dashboard":"유입부터 구매까지, 놓친 고객과 다음 운영 액션을 연결합니다.","/advertisers":"광고주를 찾고, 담당자와 연결 상태를 확인해 Workspace로 이동합니다.","/funnel":"고객을 놓치는 구간과 다시 만날 기회를 확인합니다.","/performance":"현재 데이터를 기준으로 개선안과 예상 변화를 비교합니다.","/campaigns":"고객 조건·채널·메시지·예산을 조합해 실제 광고 운영 전 실행안을 검토합니다.","/operations":"검토가 필요한 운영 제안을 확인하고 다음 액션을 결정합니다.","/reports":"이번 기간 성과와 개선 기회를 한 장의 보고서로 읽습니다.","/connections":"데이터 출처와 채널별 연결 상태를 확인합니다.","/settings":"사용자, 담당 광고주와 시스템 설정을 관리합니다."};
 const navIcons:Record<string,typeof LayoutDashboard>={"/dashboard":LayoutDashboard,"/advertisers":Building2,"/funnel":Route,"/performance":SlidersHorizontal,"/campaigns":Megaphone,"/operations":ListChecks,"/reports":FileChartColumn,"/connections":Cable,"/settings":Settings2};
 const SelectionContext = createContext<(id: string, period: Period) => void>(() => {});
 export const useWorkspaceSelection = () => useContext(SelectionContext);
@@ -37,7 +39,7 @@ function Shell({ children, advertisers, initialData }: { children: React.ReactNo
   const selectable=admin||advertisers.length>1;
   const requestedId=search.get("advertiser");
   const deniedWorkspace=!!requestedId&&!canAccessAdvertiser(user,requestedId);
-  const items=navigation.filter(n=>canAccessRoute(user,n.href)).map(n=>({...n,name:n.href==="/campaigns"&&!can(user.role,"MANAGE_CAMPAIGN")?"광고 현황":n.name}));
+  const items=navigation.filter(n=>canAccessRoute(user,n.href)).map(n=>({...n,name:n.href==="/campaigns"&&!can(user.role,"MANAGE_CAMPAIGN")?"실행안 현황":n.name}));
   const [advertiserId, setAdvertiserId] = useState(()=>requestedId&&advertisers.some(a=>a.id===requestedId)?requestedId:initialData.advertiser.id);
   const scopeId=advertiserId;
   const [period, setPeriod] = useState<Period>(()=>[7,14,30].includes(Number(search.get("period")))?Number(search.get("period")) as Period:30);

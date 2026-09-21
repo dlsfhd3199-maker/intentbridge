@@ -52,11 +52,11 @@ export function evaluateCampaign(draft: CampaignDraft, context: CampaignWorkspac
   const checks = [
     { label: "Traffic Source Rule", ready: supported && draft.sourceIds.length > 0 && draft.sourceIds.every(id => context.funnel.sources.some(source => source.id === id)), reason: "ChatGPT → Meta Mock 조합과 유입 소스 선택이 필요합니다." },
     { label: "Audience Rule", ready: audience > 0, reason: "선택 조건에 맞는 Audience가 1명 이상 필요합니다." },
-    { label: "Purchase Exclusion", ready: draft.purchaseExcluded, reason: "Mock 생성 전 구매 고객 제외를 ON으로 설정하세요." },
+    { label: "Purchase Exclusion", ready: draft.purchaseExcluded, reason: "실행안 저장 전 구매 고객 제외를 ON으로 설정하세요." },
     { label: "Retargeting Window", ready: [3, 7, 14, 30].includes(draft.window), reason: "지원 Window를 선택하세요." },
-    { label: "Budget", ready: Number.isFinite(draft.budget.total) && draft.budget.total > 0 && draft.budget.duration >= 1 && draft.budget.duration <= 90, reason: "양수 예산과 1~90일 집행 기간이 필요합니다." },
+    { label: "Budget", ready: Number.isFinite(draft.budget.total) && draft.budget.total > 0 && draft.budget.duration >= 1 && draft.budget.duration <= 90, reason: "양수 예산안과 1~90일 계획 기간이 필요합니다." },
     { label: "Creative", ready: [draft.message.headline, draft.message.body, draft.message.cta, draft.name].every(value => value.trim().length > 0), reason: "이름·Headline·Body·CTA를 입력하세요." },
-    { label: "Tracking Parameters", ready: new URLSearchParams(tracking.parameters).get("utm_campaign") !== "", reason: "추적 가능한 캠페인 이름을 입력하세요." },
+    { label: "Tracking Parameters", ready: new URLSearchParams(tracking.parameters).get("utm_campaign") !== "", reason: "추적에 사용할 실행안 이름을 입력하세요." },
     { label: "Performance Measurement", ready: measurable && supported, reason: "Lead/Custom 및 미지원 채널의 측정은 Coming Soon입니다." },
   ];
   return { audience, segmentName: segment?.name ?? "선택되지 않음", behavior: segment?.event ?? "ViewContent", priority: segment?.priority ?? "—", supported, forecast, tracking, checks, ready: checks.every(check => check.ready) };

@@ -18,7 +18,7 @@ export function detectTrend(rows:DailyMetric[]):TrendDetection {
 export async function loadPerformanceTrend(advertiserId:string,period:Period,campaignId?:string):Promise<PerformanceTrend>{
   const periods=[7,14,30] as const;
   const campaign=campaignId?readCampaignStore(advertiserId).campaigns.find(c=>c.id===campaignId):undefined;
-  if(campaignId&&!campaign)throw new Error("캠페인을 찾을 수 없습니다.");
+  if(campaignId&&!campaign)throw new Error("실행안을 찾을 수 없습니다.");
   const snapshots=await Promise.all(periods.map(async days=>{
     if(campaign){const m=monitorCampaign(campaign,days);return {totals:{spend:m.spend,traffic:m.clicks,purchases:m.purchases,revenue:m.revenue},scope:campaign.name+" · Mock 클릭 유입",frequency:m.frequency};}
     const d=await getDashboard({advertiserId,period:days});return {totals:{spend:d.totals.spend,traffic:d.source.uniqueUsers,purchases:d.totals.purchases,revenue:d.totals.revenue},scope:d.advertiser.name+" · 전체 Mock 유입",frequency:2.2};

@@ -25,10 +25,10 @@ export function storeRule(rule:AutomationRule) {
 }
 export function deleteRule(advertiserId:string,id:string) {const store=readOperations(advertiserId);writeOperations(advertiserId,{...store,rules:store.rules.filter(r=>r.id!==id)});}
 export function saveControls(id:string,campaignId:string,target:CampaignTarget,guardrail:Guardrail) {
-  if (!readCampaignStore(id).campaigns.some(c=>c.id===campaignId&&c.status!=="DRAFT")) throw new Error("캠페인을 찾을 수 없습니다.");
+  if (!readCampaignStore(id).campaigns.some(c=>c.id===campaignId&&c.status!=="DRAFT")) throw new Error("실행안을 찾을 수 없습니다.");
   if (!validTarget(target)||!validGuardrail(guardrail)) throw new Error("양수 목표값, 최소≤최대 예산, 1~100% 증액 한도를 확인하세요.");
   const s=readOperations(id);return writeOperations(id,{...s,targets:{...s.targets,[campaignId]:target},guardrails:{...s.guardrails,[campaignId]:guardrail}});
 }
 export function markAlertRead(id:string,alertId:string) {const s=readOperations(id);writeOperations(id,{...s,alerts:s.alerts.map(a=>a.id===alertId?{...a,read:true}:a)});}
 
-export function saveConflictResolution(id:string,campaignId:string,resolution:ConflictResolution){if(!conflictModes.includes(resolution)||!readCampaignStore(id).campaigns.some(c=>c.id===campaignId))throw new Error("잘못된 Campaign 또는 충돌 처리 방식입니다.");const s=readOperations(id);return writeOperations(id,{...s,conflictResolutions:{...s.conflictResolutions,[campaignId]:resolution}});}
+export function saveConflictResolution(id:string,campaignId:string,resolution:ConflictResolution){if(!conflictModes.includes(resolution)||!readCampaignStore(id).campaigns.some(c=>c.id===campaignId))throw new Error("잘못된 실행안 또는 충돌 처리 방식입니다.");const s=readOperations(id);return writeOperations(id,{...s,conflictResolutions:{...s.conflictResolutions,[campaignId]:resolution}});}
